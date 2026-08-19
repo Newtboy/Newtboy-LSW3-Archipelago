@@ -1,5 +1,4 @@
 from BaseClasses import Region, ItemClassification
-
 from worlds.AutoWorld import World
 
 from .Items import (
@@ -8,6 +7,11 @@ from .Items import (
     ITEM_GOLD_BRICK,
     RED_BRICK_ITEM_IDS,
     CHARACTER_ITEM_IDS,
+)
+
+from .Locations import (
+    LSW3Location,
+    RED_BRICK_LOCATION_IDS,
 )
 
 
@@ -34,9 +38,7 @@ class LSW3World(World):
         },
     }
 
-    location_name_to_id = {
-        "Test Location": 0x4C535700 + 0x1000,
-    }
+    location_name_to_id = RED_BRICK_LOCATION_IDS
 
     def create_regions(self):
         menu = Region(
@@ -46,6 +48,16 @@ class LSW3World(World):
         )
 
         self.multiworld.regions.append(menu)
+
+        for name, location_id in RED_BRICK_LOCATION_IDS.items():
+            menu.locations.append(
+                LSW3Location(
+                    self.player,
+                    name,
+                    location_id,
+                    menu,
+                )
+            )
 
     def create_items(self):
         for name in self.item_name_to_id:

@@ -145,6 +145,23 @@ class LSW3Memory:
 
     def lock_character(self, name):
         self.set_character(name, 0)
+        
+    def reset_managed_state(self):
+        # Red Bricks
+        self.red_bricks_1_8 = 0
+        self.red_bricks_9_16 = 0
+        self.red_bricks_17_18 = 0
+
+        self.red_brick_1_8_count = 0
+        self.red_brick_9_16_count = 0
+        self.red_brick_17_18_count = 0
+
+        # Gold Bricks
+        self.gold_bricks = 0
+
+        # Characters
+        for name in self.CHARACTERS:
+            self.lock_character(name)
 
     def unlock_red_brick(self, brick_number):
         if not 1 <= brick_number <= 18:
@@ -172,6 +189,44 @@ class LSW3Memory:
             return False
 
         flags |= bit
+
+        self.write_u8(flags_address, flags)
+
+        # Keep the pause-menu count synchronized.
+        self.write_u8(
+            count_address,
+            flags.bit_count()
+        )
+
+        return True
+    
+    def lock_red_brick(self, brick_number):
+        if not 1 <= brick_number <= 18:
+            raise ValueError("Red brick number must be between 1 and 18")
+
+        if brick_number <= 8:
+            flags_address = self.RED_BRICKS_1_8
+            count_address = self.RED_BRICK_1_8_COUNT
+            bit = 1 << (brick_number - 1)
+
+        elif brick_number <= 16:
+            flags_address = self.RED_BRICKS_9_16
+            count_address = self.RED_BRICK_9_16_COUNT
+            bit = 1 << (brick_number - 9)
+
+        else:
+            flags_address = self.RED_BRICKS_17_18
+            count_address = self.RED_BRICK_17_18_COUNT
+            bit = 1 << (brick_number - 17)
+
+        flags = self.read_u8(flags_address)
+
+        # Already locked.
+        if not flags & bit:
+            return False
+
+        # Clear this brick's flag.
+        flags &= ~bit
 
         self.write_u8(flags_address, flags)
 
