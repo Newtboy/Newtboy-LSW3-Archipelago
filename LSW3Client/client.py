@@ -62,56 +62,81 @@ class LSW3Context(CommonContext):
         await self.send_connect()
         
     async def game_watcher(self):
-        previous_counts = {
-            1: self.game_memory.red_brick_1_8_count,
-            2: self.game_memory.red_brick_9_16_count,
-            3: self.game_memory.red_brick_17_18_count,
-        }
+        previous_1_8 = self.game_memory.red_bricks_1_8
+        previous_9_16 = self.game_memory.red_bricks_9_16
+        previous_17_18 = self.game_memory.red_bricks_17_18
 
         while True:
-            current_counts = {
-                1: self.game_memory.red_brick_1_8_count,
-                2: self.game_memory.red_brick_9_16_count,
-                3: self.game_memory.red_brick_17_18_count,
-            }
+            current_1_8 = self.game_memory.red_bricks_1_8
+            current_9_16 = self.game_memory.red_bricks_9_16
+            current_17_18 = self.game_memory.red_bricks_17_18
 
             # Red Bricks 1-8
-            changed = current_counts[1] & ~previous_counts[1]
+            for brick_number in range(1, 9):
+                was_unlocked = previous_1_8 & (1 << (brick_number - 1))
+                is_unlocked = current_1_8 & (1 << (brick_number - 1))
 
-            for bit in range(8):
-                if changed & (1 << bit):
-                    self.red_brick_collected(bit + 1)
+                if not was_unlocked and is_unlocked:
+                    self.red_brick_collected(brick_number)
 
             # Red Bricks 9-16
-            changed = current_counts[2] & ~previous_counts[2]
+            for brick_number in range(9, 17):
+                bit = 1 << (brick_number - 9)
 
-            for bit in range(8):
-                if changed & (1 << bit):
-                    self.red_brick_collected(bit + 9)
+                was_unlocked = previous_9_16 & bit
+                is_unlocked = current_9_16 & bit
+
+                if not was_unlocked and is_unlocked:
+                    self.red_brick_collected(brick_number)
 
             # Red Bricks 17-18
-            changed = current_counts[3] & ~previous_counts[3]
+            for brick_number in range(17, 19):
+                bit = 1 << (brick_number - 17)
 
-            for bit in range(2):
-                if changed & (1 << bit):
-                    self.red_brick_collected(bit + 17)
+                was_unlocked = previous_17_18 & bit
+                is_unlocked = current_17_18 & bit
 
-            previous_counts = current_counts
+                if not was_unlocked and is_unlocked:
+                    self.red_brick_collected(brick_number)
+
+            previous_1_8 = current_1_8
+            previous_9_16 = current_9_16
+            previous_17_18 = current_17_18
 
             await asyncio.sleep(0.1)
             
     def red_brick_collected(self, brick_number):
         name = f"Red Brick {brick_number}"
 
-        print(f"Detected collection of {name}")
+        # Archipelago caused this brick to appear.
+        if brick_number in self.expected_red_bricks:
+            print(
+                f"{name} appeared because Archipelago gave it to us."
+            )
 
-        # Only report the location if Archipelago has given us this brick.
-        if brick_number not in self.archi_red_bricks:
-            print(f"{name} is not currently owned by Archipelago.")
-            self.game_memory.lock_red_brick(brick_number)
+            self.expected_red_bricks.remove(brick_number)
+
+            # Don't let the game count the AP-granted brick
+            # as a physical collection.
+            self.game_memory.lock_red_brick_count(brick_number)
+
             return
 
-        print(f"{name} is an Archipelago item. Sending location check.")
+        # Player physically collected it.
+        print(f"Detected physical collection of {name}")
+
+        if brick_number not in self.archi_red_bricks:
+            print(f"{name} is not currently owned by Archipelago.")
+
+            # Undo the game's physical collection.
+            self.game_memory.lock_red_brick_unlock_flag(brick_number)
+
+            return
+
+        print(
+            f"{name} is owned by Archipelago. "
+            f"Sending location check."
+        )
 
         location_id = RED_BRICK_LOCATION_IDS[name]
 
@@ -120,28 +145,9 @@ class LSW3Context(CommonContext):
             "locations": [location_id],
         }])
 
-        # Remove the collection flag, but leave the unlock flag alone.
-        self.game_memory.clear_red_brick_count(brick_number)
-        
-    def clear_red_brick_count(self, brick_number):
-        if not 1 <= brick_number <= 18:
-            raise ValueError("Red brick number must be between 1 and 18")
-
-        if brick_number <= 8:
-            address = self.RED_BRICK_1_8_COUNT
-            bit = 1 << (brick_number - 1)
-
-        elif brick_number <= 16:
-            address = self.RED_BRICK_9_16_COUNT
-            bit = 1 << (brick_number - 9)
-
-        else:
-            address = self.RED_BRICK_17_18_COUNT
-            bit = 1 << (brick_number - 17)
-
-        current = self.read_u8(address)
-        self.write_u8(address, current & ~bit)
-
+        # Remove the physical collection from the game.
+        self.game_memory.lock_red_brick_unlock_flag(brick_number)
+            
     def on_package(self, cmd, args):
         print(f"PACKET: {cmd}")
 
@@ -157,6 +163,19 @@ class LSW3Context(CommonContext):
     def handle_received_item(self, item):
         if self.game_memory is None:
             print("Cannot handle item: Dolphin is not connected.")
+            return
+        
+        # Filler Studs
+        STUD_VALUES = {
+            ITEM_STUDS_10: 10,
+            ITEM_STUDS_100: 100,
+            ITEM_STUDS_1000: 1000,
+            ITEM_STUDS_10000: 10000,
+        }
+        if item.item in STUD_VALUES:
+            amount = STUD_VALUES[item.item]
+            self.game_memory.studs += amount
+            print(f"Received {amount:,} Studs!")
             return
 
         # Gold Brick
@@ -179,8 +198,8 @@ class LSW3Context(CommonContext):
                 brick_number = int(name.split()[-1])
 
                 self.archi_red_bricks.add(brick_number)
+                self.expected_red_bricks.add(brick_number)
 
-                # Give the physical brick to the player.
                 self.game_memory.unlock_red_brick(brick_number)
 
                 print(
@@ -227,8 +246,6 @@ async def run_client(args):
     ctx = LSW3Context(args.connect, args.password)
 
     ctx.auth = "Whirl"
-
-    asyncio.create_task(ctx.game_watcher())
 
     await server_loop(ctx)
 

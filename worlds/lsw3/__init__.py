@@ -7,6 +7,10 @@ from .Items import (
     ITEM_GOLD_BRICK,
     RED_BRICK_ITEM_IDS,
     CHARACTER_ITEM_IDS,
+    ITEM_STUDS_10,
+    ITEM_STUDS_100,
+    ITEM_STUDS_1000,
+    ITEM_STUDS_10000
 )
 
 from .Locations import (
@@ -22,10 +26,19 @@ class LSW3World(World):
         "Gold Brick": ITEM_GOLD_BRICK,
         **RED_BRICK_ITEM_IDS,
         **CHARACTER_ITEM_IDS,
+        "10 Studs": ITEM_STUDS_10,
+        "100 Studs": ITEM_STUDS_100,
+        "1000 Studs": ITEM_STUDS_1000,
+        "10000 Studs": ITEM_STUDS_10000
     }
 
     item_name_to_classification = {
         "Gold Brick": ItemClassification.useful,
+
+        "10 Studs": ItemClassification.filler,
+        "100 Studs": ItemClassification.filler,
+        "1000 Studs": ItemClassification.filler,
+        "10000 Studs": ItemClassification.filler,
 
         **{
             name: ItemClassification.useful
@@ -60,7 +73,24 @@ class LSW3World(World):
             )
 
     def create_items(self):
+        # Add every progression/useful item.
         for name in self.item_name_to_id:
+            if self.item_name_to_classification[name] != ItemClassification.filler:
+                self.multiworld.itempool.append(
+                    self.create_item(name)
+                )
+
+        # Fill remaining slots with random Stud values.
+        filler_items = [
+            "10 Studs",
+            "100 Studs",
+            "1000 Studs",
+            "10000 Studs",
+        ]
+
+        while len(self.multiworld.itempool) < len(RED_BRICK_LOCATION_IDS):
+            name = self.random.choice(filler_items)
+
             self.multiworld.itempool.append(
                 self.create_item(name)
             )

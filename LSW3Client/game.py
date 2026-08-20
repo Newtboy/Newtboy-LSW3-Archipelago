@@ -199,41 +199,52 @@ class LSW3Memory:
         )
 
         return True
-    
-    def lock_red_brick(self, brick_number):
+
+    def lock_red_brick_unlock_flag(self, brick_number):
+        """Clear the actual red-brick unlock flag."""
         if not 1 <= brick_number <= 18:
             raise ValueError("Red brick number must be between 1 and 18")
 
         if brick_number <= 8:
-            flags_address = self.RED_BRICKS_1_8
-            count_address = self.RED_BRICK_1_8_COUNT
+            address = self.RED_BRICKS_1_8
             bit = 1 << (brick_number - 1)
 
         elif brick_number <= 16:
-            flags_address = self.RED_BRICKS_9_16
-            count_address = self.RED_BRICK_9_16_COUNT
+            address = self.RED_BRICKS_9_16
             bit = 1 << (brick_number - 9)
 
         else:
-            flags_address = self.RED_BRICKS_17_18
-            count_address = self.RED_BRICK_17_18_COUNT
+            address = self.RED_BRICKS_17_18
             bit = 1 << (brick_number - 17)
 
-        flags = self.read_u8(flags_address)
+        current = self.read_u8(address)
 
-        # Already locked.
-        if not flags & bit:
+        if not current & bit:
             return False
 
-        # Clear this brick's flag.
-        flags &= ~bit
+        self.write_u8(address, current & ~bit)
 
-        self.write_u8(flags_address, flags)
+        return True
+    
+    def lock_red_brick_count(self, brick_number):
+        """Remove this brick from the game's displayed collected count."""
+        if not 1 <= brick_number <= 18:
+            raise ValueError("Red brick number must be between 1 and 18")
 
-        # Keep the pause-menu count synchronized.
-        self.write_u8(
-            count_address,
-            flags.bit_count()
-        )
+        if brick_number <= 8:
+            address = self.RED_BRICK_1_8_COUNT
+
+        elif brick_number <= 16:
+            address = self.RED_BRICK_9_16_COUNT
+
+        else:
+            address = self.RED_BRICK_17_18_COUNT
+
+        current = self.read_u8(address)
+
+        if current == 0:
+            return False
+
+        self.write_u8(address, current - 1)
 
         return True
