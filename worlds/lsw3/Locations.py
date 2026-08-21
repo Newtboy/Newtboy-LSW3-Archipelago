@@ -5,9 +5,8 @@ GAME_NAME = "LEGO Star Wars III: The Clone Wars"
 
 BASE_ID = 0x4C535700
 
-
 RED_BRICK_LOCATION_IDS = {
-    f"Red Brick {i}": BASE_ID + 0x1000 + (i - 1)
+    f"Red Brick Location {i}": 1000 + i
     for i in range(1, 19)
 }
 

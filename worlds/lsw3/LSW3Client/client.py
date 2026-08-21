@@ -172,7 +172,8 @@ class LSW3Context(CommonContext):
             f"Sending location check."
         )
 
-        location_id = RED_BRICK_LOCATION_IDS[name]
+        location_name = f"Red Brick Location {brick_number}"
+        location_id = RED_BRICK_LOCATION_IDS[location_name]
 
         await self.send_msgs([{
             "cmd": "LocationChecks",
@@ -296,21 +297,31 @@ class LSW3Context(CommonContext):
         }])
 
 
-async def run_client(args):
-    ctx = LSW3Context(args.connect, args.password)
+def run_client(*launcher_args):
+    parser = get_base_parser(
+        description="LEGO Star Wars III: The Clone Wars Archipelago Client."
+    )
 
-    ctx.auth = "Whirl"
+    args = parser.parse_args(launcher_args)
 
-    if gui_enabled:
-        ctx.run_gui()
+    async def _run():
+        ctx = LSW3Context(args.connect, args.password)
 
-    await server_loop(ctx)
+        ctx.server_task = asyncio.create_task(
+            server_loop(ctx),
+            name="ServerLoop"
+        )
+
+        if gui_enabled:
+            ctx.run_gui()
+
+        await ctx.exit_event.wait()
+        await ctx.shutdown()
+
+    asyncio.run(_run())
 
 def main():
-    parser = get_base_parser()
-    args = parser.parse_args()
-
-    asyncio.run(run_client(args))
+    run_client()
 
 
 if __name__ == "__main__":

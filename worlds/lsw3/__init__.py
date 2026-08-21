@@ -110,13 +110,44 @@ def show_step(message: str):
         message,
     )
 
+import psutil
 
-def launch_client(*args: str):
+def dolphin_is_running():
+    for process in psutil.process_iter(["name"]):
+        try:
+            if process.info["name"] and process.info["name"].lower() == "dolphin.exe":
+                return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            pass
 
-    # ---------------------------------------------------------
-    # Launch Dolphin
-    # ---------------------------------------------------------
+    return False
 
+def run_client(*launcher_args):
+    parser = get_base_parser(
+        description="LEGO Star Wars III: The Clone Wars Archipelago Client."
+    )
+
+    args = parser.parse_args(launcher_args)
+
+    async def _run():
+        ctx = LSW3Context(args.connect, args.password)
+
+        if gui_enabled:
+            ctx.run_gui()
+
+        await server_loop(ctx, args)
+
+    asyncio.run(_run())
+
+
+def main():
+    run_client()
+
+
+if __name__ == "__main__":
+    main()
+
+def launch_client(*args):
     dolphin_path = get_dolphin_path()
 
     if dolphin_path is None:
@@ -124,28 +155,17 @@ def launch_client(*args: str):
 
     print(f"Launching Dolphin: {dolphin_path}")
 
-    subprocess.Popen([str(dolphin_path)])
-
-    # ---------------------------------------------------------
-    # User opens LSW3
-    # ---------------------------------------------------------
+    if not dolphin_is_running():
+        subprocess.Popen([str(dolphin_path)])
 
     show_step(
         "Open LEGO Star Wars III."
     )
 
-    # ---------------------------------------------------------
-    # User loads/creates save
-    # ---------------------------------------------------------
-
     show_step(
         "Load/Create a save file.\n\n"
         "Do not start the game."
     )
-
-    # ---------------------------------------------------------
-    # Start client
-    # ---------------------------------------------------------
 
     show_step(
         "Launching client."
@@ -156,10 +176,8 @@ def launch_client(*args: str):
     launch(
         run_client,
         name="LEGO Star Wars III: The Clone Wars Client",
-        args=args,
     )
-
-
+    
 components.append(
     Component(
         display_name="LEGO Star Wars III: The Clone Wars",
@@ -197,7 +215,7 @@ class LSW3World(World):
         "10000 Studs": ItemClassification.filler,
 
         **{
-            name: ItemClassification.useful
+            name: ItemClassification.progression
             for name in RED_BRICK_ITEM_IDS
         },
 
