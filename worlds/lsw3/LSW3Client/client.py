@@ -14,10 +14,12 @@ warnings.filterwarnings(
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
+
+
 import asyncio
 import logging
 
-from CommonClient import CommonContext, get_base_parser, server_loop
+from CommonClient import CommonContext, get_base_parser, server_loop, gui_enabled
 from .game import LSW3Memory
 
 from worlds.lsw3.Items import (
@@ -48,6 +50,23 @@ class LSW3Context(CommonContext):
         self.nonrandomized_red_bricks = set()
 
         self.game_memory = None
+        
+    def run_gui(self):
+        from kvui import GameManager
+
+        class LSW3Manager(GameManager):
+            logging_pairs = [
+                ("Client", "Archipelago")
+            ]
+
+            base_title = "Archipelago LEGO Star Wars III Client"
+
+        self.ui = LSW3Manager(self)
+
+        self.ui_task = asyncio.create_task(
+            self.ui.async_run(),
+            name="UI"
+        )
 
     async def server_auth(self, password_requested=False):
         await super().server_auth(password_requested)
@@ -280,7 +299,10 @@ class LSW3Context(CommonContext):
 async def run_client(args):
     ctx = LSW3Context(args.connect, args.password)
 
-    ctx.auth = args.username
+    ctx.auth = "Whirl"
+
+    if gui_enabled:
+        ctx.run_gui()
 
     await server_loop(ctx)
 

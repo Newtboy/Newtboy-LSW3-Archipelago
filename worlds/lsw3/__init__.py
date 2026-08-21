@@ -20,47 +20,138 @@ from .Locations import (
     RED_BRICK_LOCATION_IDS,
 )
 
-from worlds.LauncherComponents import Component, components, Type
+########################################## Launcher Code ###################################################
 
-import time
+from worlds.LauncherComponents import Component, components, Type, launch
+
+import json
+import subprocess
 import tkinter as tk
-from tkinter import messagebox
+from pathlib import Path
+from tkinter import filedialog, messagebox
+import asyncio
 
+CONFIG_DIR = Path.home() / "AppData" / "Roaming" / "Archipelago" / "LSW3"
+CONFIG_FILE = CONFIG_DIR / "config.json"
 
-def show_error(message: str):
+def run_client_launcher(*args: str):
+    asyncio.run(run_client(*args))
+
+def show_message(title: str, message: str):
     root = tk.Tk()
     root.withdraw()
 
-    messagebox.showerror(
-        "LEGO Star Wars III: The Clone Wars",
+    messagebox.showinfo(
+        title,
         message,
+        parent=root,
     )
 
     root.destroy()
 
 
+def ask_dolphin_path():
+    root = tk.Tk()
+    root.withdraw()
+
+    path = filedialog.askopenfilename(
+        title="Select Dolphin Emulator",
+        filetypes=[
+            ("Dolphin Emulator", "Dolphin.exe"),
+            ("Executable files", "*.exe"),
+            ("All files", "*.*"),
+        ],
+        parent=root,
+    )
+
+    root.destroy()
+
+    return path
+
+
+def get_dolphin_path():
+    if CONFIG_FILE.exists():
+        try:
+            with CONFIG_FILE.open("r", encoding="utf-8") as f:
+                config = json.load(f)
+
+            path = Path(config.get("dolphin_path", ""))
+
+            if path.is_file():
+                return path
+
+        except (OSError, json.JSONDecodeError):
+            pass
+
+    path = ask_dolphin_path()
+
+    if not path:
+        return None
+
+    path = Path(path)
+
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+
+    with CONFIG_FILE.open("w", encoding="utf-8") as f:
+        json.dump(
+            {
+                "dolphin_path": str(path),
+            },
+            f,
+            indent=4,
+        )
+
+    return path
+
+
+def show_step(message: str):
+    show_message(
+        "LEGO Star Wars III: The Clone Wars",
+        message,
+    )
+
+
 def launch_client(*args: str):
-    # TODO: Launch Dolphin
-    print("Launching Dolphin...")
 
-    # TODO: Find LEGO Star Wars III in Dolphin's library
-    print("Finding LEGO Star Wars III...")
+    # ---------------------------------------------------------
+    # Launch Dolphin
+    # ---------------------------------------------------------
 
-    # TODO: Launch LEGO Star Wars III
-    print("Launching LEGO Star Wars III...")
+    dolphin_path = get_dolphin_path()
 
-    # TODO: Send:
-    # Plus
-    # A
-    # A
-    # A
+    if dolphin_path is None:
+        return
 
-    time.sleep(5)
+    print(f"Launching Dolphin: {dolphin_path}")
 
-    # Start the actual Archipelago client as a subprocess.
-    from .client import run_client
+    subprocess.Popen([str(dolphin_path)])
 
-    from worlds.LauncherComponents import launch
+    # ---------------------------------------------------------
+    # User opens LSW3
+    # ---------------------------------------------------------
+
+    show_step(
+        "Open LEGO Star Wars III."
+    )
+
+    # ---------------------------------------------------------
+    # User loads/creates save
+    # ---------------------------------------------------------
+
+    show_step(
+        "Load/Create a save file.\n\n"
+        "Do not start the game."
+    )
+
+    # ---------------------------------------------------------
+    # Start client
+    # ---------------------------------------------------------
+
+    show_step(
+        "Launching client."
+    )
+
+    from .LSW3Client.client import run_client
 
     launch(
         run_client,
@@ -79,6 +170,7 @@ components.append(
     )
 )
 
+########################################## Launcher World End ################################################
 
 class LSW3World(World):
     game = GAME_NAME
