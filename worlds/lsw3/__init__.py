@@ -20,7 +20,7 @@ from .Locations import (
     RED_BRICK_LOCATION_IDS,
 )
 
-from ...worlds.LauncherComponents import Component, components, Type
+from worlds.LauncherComponents import Component, components, Type
 
 import time
 import tkinter as tk
@@ -39,7 +39,7 @@ def show_error(message: str):
     root.destroy()
 
 
-def launch_lsw3_client(*args: str):
+def launch_client(*args: str):
     # TODO: Launch Dolphin
     print("Launching Dolphin...")
 
@@ -72,7 +72,7 @@ def launch_lsw3_client(*args: str):
 components.append(
     Component(
         display_name="LEGO Star Wars III: The Clone Wars",
-        func=launch_lsw3_client,
+        func=launch_client,
         component_type=Type.CLIENT,
         game_name="LEGO Star Wars III: The Clone Wars",
         description="Archipelago client for LEGO Star Wars III: The Clone Wars.",
