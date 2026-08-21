@@ -24,6 +24,10 @@ from worlds.lsw3.Items import (
     ITEM_GOLD_BRICK,
     CHARACTER_ITEM_IDS,
     RED_BRICK_ITEM_IDS,
+    ITEM_STUDS_10,
+    ITEM_STUDS_100,
+    ITEM_STUDS_1000,
+    ITEM_STUDS_10000
 )
 
 from worlds.lsw3.Locations import RED_BRICK_LOCATION_IDS
@@ -32,6 +36,7 @@ from worlds.lsw3.Locations import RED_BRICK_LOCATION_IDS
 class LSW3Context(CommonContext):
     game = "LEGO Star Wars III: The Clone Wars"
     items_handling = 0b111
+    goal_sent = False
 
     def __init__(self, server_address, password):
         super().__init__(server_address, password)
@@ -39,6 +44,8 @@ class LSW3Context(CommonContext):
         self.archi_red_bricks = set()
 
         self.expected_red_bricks = set()
+        
+        self.nonrandomized_red_bricks = set()
 
         self.game_memory = None
 
@@ -51,7 +58,6 @@ class LSW3Context(CommonContext):
             try:
                 self.game_memory = LSW3Memory()
                 print("Connected to Dolphin!")
-                print(f"Gold Bricks: {self.game_memory.gold_bricks}")
 
                 asyncio.create_task(self.game_watcher())
 
@@ -77,7 +83,7 @@ class LSW3Context(CommonContext):
                 is_unlocked = current_1_8 & (1 << (brick_number - 1))
 
                 if not was_unlocked and is_unlocked:
-                    self.red_brick_collected(brick_number)
+                    await self.red_brick_collected(brick_number)
 
             # Red Bricks 9-16
             for brick_number in range(9, 17):
@@ -87,7 +93,7 @@ class LSW3Context(CommonContext):
                 is_unlocked = current_9_16 & bit
 
                 if not was_unlocked and is_unlocked:
-                    self.red_brick_collected(brick_number)
+                    await self.red_brick_collected(brick_number)
 
             # Red Bricks 17-18
             for brick_number in range(17, 19):
@@ -97,15 +103,25 @@ class LSW3Context(CommonContext):
                 is_unlocked = current_17_18 & bit
 
                 if not was_unlocked and is_unlocked:
-                    self.red_brick_collected(brick_number)
+                    await self.red_brick_collected(brick_number)
 
             previous_1_8 = current_1_8
             previous_9_16 = current_9_16
             previous_17_18 = current_17_18
+            
+            if not self.goal_sent and self.game_memory.all_red_bricks_unlocked():
+                print("All 18 Red Bricks collected! Game complete.")
+
+                await self.send_msgs([{
+                    "cmd": "StatusUpdate",
+                    "status": 30,  # CLIENT_GOAL
+                }])
+
+                self.goal_sent = True
 
             await asyncio.sleep(0.1)
             
-    def red_brick_collected(self, brick_number):
+    async def red_brick_collected(self, brick_number):
         name = f"Red Brick {brick_number}"
 
         # Archipelago caused this brick to appear.
@@ -125,33 +141,50 @@ class LSW3Context(CommonContext):
         # Player physically collected it.
         print(f"Detected physical collection of {name}")
 
-        if brick_number not in self.archi_red_bricks:
-            print(f"{name} is not currently owned by Archipelago.")
-
-            # Undo the game's physical collection.
-            self.game_memory.lock_red_brick_unlock_flag(brick_number)
-
+        # This brick is not randomized.
+        # Let the base game handle it normally.
+        if brick_number not in self.randomized_red_bricks:
+            print(f"{name} is not randomized. Leaving it alone.")
             return
 
+        # This brick is randomized, so the collection is an AP location check.
         print(
-            f"{name} is owned by Archipelago. "
+            f"{name} is randomized. "
             f"Sending location check."
         )
 
         location_id = RED_BRICK_LOCATION_IDS[name]
 
-        self.send_msgs([{
+        await self.send_msgs([{
             "cmd": "LocationChecks",
             "locations": [location_id],
         }])
 
         # Remove the physical collection from the game.
         self.game_memory.lock_red_brick_unlock_flag(brick_number)
-            
+
     def on_package(self, cmd, args):
         print(f"PACKET: {cmd}")
 
-        super().on_package(cmd, args)
+        if cmd == "Connected":
+            self.randomized_red_bricks = set(
+                args["slot_data"]["randomized_red_bricks"]
+            )
+
+            self.nonrandomized_red_bricks = (
+                set(range(1, 19))
+                - self.randomized_red_bricks
+            )
+
+            print(
+                f"Randomized red bricks: "
+                f"{sorted(self.randomized_red_bricks)}"
+            )
+
+            print(
+                f"Non-randomized red bricks: "
+                f"{sorted(self.nonrandomized_red_bricks)}"
+            )
 
         if cmd == "ReceivedItems":
             print(f"Received {len(args['items'])} item(s)")
@@ -160,6 +193,8 @@ class LSW3Context(CommonContext):
                 print(f"Item ID: {item.item}")
                 self.handle_received_item(item)
 
+        super().on_package(cmd, args)
+        
     def handle_received_item(self, item):
         if self.game_memory is None:
             print("Cannot handle item: Dolphin is not connected.")

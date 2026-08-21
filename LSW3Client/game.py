@@ -199,6 +199,31 @@ class LSW3Memory:
         )
 
         return True
+    
+    def all_red_bricks_unlocked(self):
+        return all(
+            self.red_brick_unlocked(i)
+            for i in range(1, 19)
+        )
+        
+    def red_brick_unlocked(self, brick_number):
+        if not 1 <= brick_number <= 18:
+            raise ValueError("Red brick number must be between 1 and 18")
+
+        if brick_number <= 8:
+            flags = self.red_bricks_1_8
+            bit = 1 << (brick_number - 1)
+
+        elif brick_number <= 16:
+            flags = self.red_bricks_9_16
+            bit = 1 << (brick_number - 9)
+
+        else:
+            flags = self.red_bricks_17_18
+            bit = 1 << (brick_number - 17)
+
+        return bool(flags & bit)
+            
 
     def lock_red_brick_unlock_flag(self, brick_number):
         """Clear the actual red-brick unlock flag."""

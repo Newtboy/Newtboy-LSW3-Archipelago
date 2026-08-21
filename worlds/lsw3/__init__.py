@@ -1,6 +1,8 @@
 from BaseClasses import Region, ItemClassification
 from worlds.AutoWorld import World
 
+from .options import LSW3Options
+
 from .Items import (
     LSW3Item,
     GAME_NAME,
@@ -21,6 +23,9 @@ from .Locations import (
 
 class LSW3World(World):
     game = GAME_NAME
+    
+    options_dataclass = LSW3Options
+    options: LSW3Options
 
     item_name_to_id = {
         "Gold Brick": ITEM_GOLD_BRICK,
@@ -73,14 +78,20 @@ class LSW3World(World):
             )
 
     def create_items(self):
-        # Add every progression/useful item.
-        for name in self.item_name_to_id:
-            if self.item_name_to_classification[name] != ItemClassification.filler:
-                self.multiworld.itempool.append(
-                    self.create_item(name)
-                )
+        red_brick_count = self.options.red_brick_count.value
 
-        # Fill remaining slots with random Stud values.
+        self.randomized_red_bricks = self.random.sample(
+            list(RED_BRICK_ITEM_IDS.keys()),
+            red_brick_count,
+        )
+
+        # Add randomized Red Bricks.
+        for name in self.randomized_red_bricks:
+            self.multiworld.itempool.append(
+                self.create_item(name)
+            )
+
+        # Fill remaining locations with filler.
         filler_items = [
             "10 Studs",
             "100 Studs",
@@ -88,13 +99,15 @@ class LSW3World(World):
             "10000 Studs",
         ]
 
-        while len(self.multiworld.itempool) < len(RED_BRICK_LOCATION_IDS):
+        remaining = len(RED_BRICK_LOCATION_IDS) - red_brick_count
+
+        for _ in range(remaining):
             name = self.random.choice(filler_items)
 
             self.multiworld.itempool.append(
                 self.create_item(name)
             )
-
+            
     def create_item(self, name):
         return LSW3Item(
             name,
@@ -104,7 +117,18 @@ class LSW3World(World):
         )
 
     def set_rules(self):
-        pass
-
+        self.multiworld.completion_condition[self.player] = lambda state: all(
+            state.has(name, self.player)
+            for name in RED_BRICK_ITEM_IDS
+        )
+        
     def generate_basic(self):
         pass
+    
+    def fill_slot_data(self):
+        return {
+            "randomized_red_bricks": [
+                int(name.split()[-1])
+                for name in self.randomized_red_bricks
+            ],
+        }
