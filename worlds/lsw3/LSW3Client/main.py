@@ -1,4 +1,4 @@
-from game import LSW3Memory
+from worlds.lsw3.LSW3Client.game import LSW3Memory
 
 
 def main():

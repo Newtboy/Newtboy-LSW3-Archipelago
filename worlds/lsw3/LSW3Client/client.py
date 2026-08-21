@@ -280,7 +280,7 @@ class LSW3Context(CommonContext):
 async def run_client(args):
     ctx = LSW3Context(args.connect, args.password)
 
-    ctx.auth = "Whirl"
+    ctx.auth = args.username
 
     await server_loop(ctx)
 

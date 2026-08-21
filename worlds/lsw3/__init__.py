@@ -20,6 +20,65 @@ from .Locations import (
     RED_BRICK_LOCATION_IDS,
 )
 
+from ...worlds.LauncherComponents import Component, components, Type
+
+import time
+import tkinter as tk
+from tkinter import messagebox
+
+
+def show_error(message: str):
+    root = tk.Tk()
+    root.withdraw()
+
+    messagebox.showerror(
+        "LEGO Star Wars III: The Clone Wars",
+        message,
+    )
+
+    root.destroy()
+
+
+def launch_lsw3_client(*args: str):
+    # TODO: Launch Dolphin
+    print("Launching Dolphin...")
+
+    # TODO: Find LEGO Star Wars III in Dolphin's library
+    print("Finding LEGO Star Wars III...")
+
+    # TODO: Launch LEGO Star Wars III
+    print("Launching LEGO Star Wars III...")
+
+    # TODO: Send:
+    # Plus
+    # A
+    # A
+    # A
+
+    time.sleep(5)
+
+    # Start the actual Archipelago client as a subprocess.
+    from .client import run_client
+
+    from worlds.LauncherComponents import launch
+
+    launch(
+        run_client,
+        name="LEGO Star Wars III: The Clone Wars Client",
+        args=args,
+    )
+
+
+components.append(
+    Component(
+        display_name="LEGO Star Wars III: The Clone Wars",
+        func=launch_lsw3_client,
+        component_type=Type.CLIENT,
+        game_name="LEGO Star Wars III: The Clone Wars",
+        description="Archipelago client for LEGO Star Wars III: The Clone Wars.",
+    )
+)
+
 
 class LSW3World(World):
     game = GAME_NAME
