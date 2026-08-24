@@ -18,6 +18,7 @@ from .Items import (
 from .Locations import (
     LSW3Location,
     RED_BRICK_LOCATION_IDS,
+    CHARACTER_LOCATION_IDS,
 )
 
 ########################################## Launcher Code ###################################################
@@ -225,7 +226,10 @@ class LSW3World(World):
         },
     }
 
-    location_name_to_id = RED_BRICK_LOCATION_IDS
+    location_name_to_id = {
+        **RED_BRICK_LOCATION_IDS,
+        **CHARACTER_LOCATION_IDS,
+    }
 
     def create_regions(self):
         menu = Region(
@@ -237,6 +241,15 @@ class LSW3World(World):
         self.multiworld.regions.append(menu)
 
         for name, location_id in RED_BRICK_LOCATION_IDS.items():
+            menu.locations.append(
+                LSW3Location(
+                    self.player,
+                    name,
+                    location_id,
+                    menu,
+                )
+            )
+        for name, location_id in CHARACTER_LOCATION_IDS.items():
             menu.locations.append(
                 LSW3Location(
                     self.player,

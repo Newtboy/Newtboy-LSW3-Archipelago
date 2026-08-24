@@ -21,7 +21,7 @@ CHEAT_CODE_CHARACTERS = 0x808CF768
 
 CHEAT_CODE_CURSOR_INDEX = 0x808CF773
 
-UNNAMED_GROUP = [
+CHARACTERS = [
     ('Heavy Weapons Clone Trooper', 0x810452A1),
     ('Clone Trooper', 0x8104529E),
     ('Commander Bly', 0x810452A2),

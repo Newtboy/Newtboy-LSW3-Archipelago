@@ -18,13 +18,15 @@ class LSW3Memory:
     CHEAT_CODE_CHARACTERS = ld.CHEAT_CODE_CHARACTERS
     CHEAT_CODE_CURSOR_INDEX = ld.CHEAT_CODE_CURSOR_INDEX
 
-    CHARACTERS = dict(ld.UNNAMED_GROUP)
+    CHARACTERS = dict(ld.CHARACTERS)
 
     def __init__(self):
         dme.hook()
 
         if not dme.is_hooked():
             raise RuntimeError("Could not hook Dolphin.")
+        else:
+            self.reset_managed_state()
 
     def read_bytes(self, address, size):
         return dme.read_bytes(address, size)
