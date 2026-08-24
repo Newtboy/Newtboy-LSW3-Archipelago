@@ -221,7 +221,7 @@ class LSW3World(World):
         },
 
         **{
-            name: ItemClassification.useful
+            name: ItemClassification.progression
             for name in CHARACTER_ITEM_IDS
         },
     }
@@ -249,26 +249,41 @@ class LSW3World(World):
                     menu,
                 )
             )
+        # Character locations.
         for name, location_id in CHARACTER_LOCATION_IDS.items():
-            menu.locations.append(
-                LSW3Location(
-                    self.player,
-                    name,
-                    location_id,
-                    menu,
-                )
+            location = LSW3Location(
+                self.player,
+                name,
+                location_id,
+                menu,
             )
+
+            menu.locations.append(location)
 
     def create_items(self):
         red_brick_count = self.options.red_brick_count.value
+        
+        character_count_percent = self.options.character_percent.value
+        
+        character_count = round(len(CHARACTER_ITEM_IDS) * self.options.character_percent.value / 100)
 
         self.randomized_red_bricks = self.random.sample(
             list(RED_BRICK_ITEM_IDS.keys()),
             red_brick_count,
         )
+        
+        self.randomized_characters = self.random.sample(
+            list(CHARACTER_ITEM_IDS.keys()),
+            character_count,
+        )
 
         # Add randomized Red Bricks.
         for name in self.randomized_red_bricks:
+            self.multiworld.itempool.append(
+                self.create_item(name)
+            )
+        
+        for name in CHARACTER_ITEM_IDS:
             self.multiworld.itempool.append(
                 self.create_item(name)
             )
