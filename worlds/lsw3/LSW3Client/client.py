@@ -34,12 +34,14 @@ from worlds.lsw3.Items import (
     ITEM_STUDS_10,
     ITEM_STUDS_100,
     ITEM_STUDS_1000,
-    ITEM_STUDS_10000
+    ITEM_STUDS_10000,
+    ITEM_PROGRESSIVE_WALLET,
 )
 
 from worlds.lsw3.Locations import (
     RED_BRICK_LOCATION_IDS,
-    CHARACTER_LOCATION_IDS
+    CHARACTER_LOCATION_IDS,
+    STUD_LOCATION_IDS
 )
 
 
@@ -52,6 +54,10 @@ class LSW3Context(CommonContext):
         super().__init__(server_address, password)
 
         self.game_memory = None
+        
+        self.wallet_level = 1
+        
+        self.stud_locations_checked = set()
 
         # =========================================================
         # Character configuration
@@ -119,6 +125,9 @@ class LSW3Context(CommonContext):
         }
         
         self.actual_golds = 0
+        
+        self.wallet_level = 0
+        self.wallet_cap = 10000
 
         # =========================================================
         # Character state
@@ -127,6 +136,35 @@ class LSW3Context(CommonContext):
         self.character_state = {}
 
         self.goal_sent = False
+        
+    async def check_stud_locations(self):
+        studs = self.game_memory.studs
+
+        stud_thresholds = [
+            10000,
+            100000,
+            1000000,
+        ]
+
+        for threshold in stud_thresholds:
+            if (
+                studs >= threshold
+                and threshold not in self.stud_locations_checked
+            ):
+                location_name = f"{threshold} Studs"
+                location_id = STUD_LOCATION_IDS[location_name]
+
+                print(
+                    f"Reached {threshold:,} studs! "
+                    f"Checking location."
+                )
+
+                await self.send_msgs([{
+                    "cmd": "LocationChecks",
+                    "locations": [location_id],
+                }])
+
+                self.stud_locations_checked.add(threshold)
 
     # =============================================================
     # GUI
@@ -190,9 +228,14 @@ class LSW3Context(CommonContext):
         while True:
             await self.check_red_bricks()
             await self.check_characters()
-            await self.check_characters()
+            await self.check_studs()
+            await self.check_stud_locations()
 
             await asyncio.sleep(0.1)
+            
+    async def check_studs(self):
+        if self.game_memory.studs > self.wallet_cap:
+            self.game_memory.studs = self.wallet_cap
             
     async def check_gold_bricks(self):
         # Gold Bricks can reset when changing zones.
@@ -504,6 +547,29 @@ class LSW3Context(CommonContext):
 
             print(
                 f"Received {amount:,} Studs!"
+            )
+
+            return
+        
+        if item.item == ITEM_PROGRESSIVE_WALLET:
+            self.wallet_level += 1
+
+            wallet_caps = [
+                10000,       # no wallet
+                100000,      # wallet 1
+                1000000,     # wallet 2
+                10000000,    # wallet 3
+                100000000,
+            ]
+
+            self.wallet_cap = wallet_caps[
+                min(self.wallet_level - 1, len(wallet_caps) - 1)
+            ]
+
+            print(
+                f"Received Progressive Wallet! "
+                f"Wallet level: {self.wallet_level}, "
+                f"cap: {self.wallet_cap:,}"
             )
 
             return

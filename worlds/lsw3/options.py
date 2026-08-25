@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from Options import Range, PerGameCommonOptions
+from Options import Range, PerGameCommonOptions, Toggle
 
 class RedBrickCount(Range):
     """How many red bricks to randomize."""
@@ -20,8 +20,13 @@ class CharacterCountPercentage(Range):
     range_end = 100
     default = 50
     
+class ProgressiveWallets(Toggle):
+    """Progressive Wallets"""
+    display_name = "Progressive Wallets"
+    
     
 @dataclass
 class LSW3Options(PerGameCommonOptions):
     red_brick_count: RedBrickCount
     character_percent: CharacterCountPercentage
+    progressive_wallets: ProgressiveWallets

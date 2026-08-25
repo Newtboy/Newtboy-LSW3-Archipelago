@@ -15,5 +15,16 @@ CHARACTER_LOCATION_IDS = {
     for i, item in enumerate(ch, start=1)
 }
 
+studCheckLevels = [
+    10000,
+    100000,
+    1000000,
+]
+
+STUD_LOCATION_IDS = {
+    f"{level} Studs": 4000 + i
+    for i, level in enumerate(studCheckLevels)
+}
+
 class LSW3Location(Location):
     game = GAME_NAME
