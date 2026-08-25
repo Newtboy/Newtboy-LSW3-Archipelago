@@ -56,16 +56,6 @@ class LSW3Context(CommonContext):
         # =========================================================
         # Character configuration
         # =========================================================
-
-        # Characters that can be obtained directly by purchasing
-        # them in one of the hubs/ships.
-        #
-        # These have a special case when received from AP:
-        # if AP gives the character before the player buys it,
-        # the character's own location is immediately checked so
-        # the character item cannot become self-locked.
-        #
-        # Names MUST match LSW3Memory.CHARACTERS exactly.
         self.hub_characters = {
             "Cad Bane",
             "Count Dooku",
@@ -110,54 +100,29 @@ class LSW3Context(CommonContext):
         }
 
         # NOTE:
-        # "Destroyer Droid" is listed as a hub character in the
-        # supplied unlock list, but it is NOT currently present
-        # in lsw3_data_pointers.CHARACTERS.
-        #
-        # It should be added here after its memory pointer is found.
-        #
-        # "Siover Boll" and "Onaconda Farr" use the spellings from
-        # the actual character pointer table.
-
+        # "Destroyer Droid" is listed as "Droideka" instead
+        # "Siover Boll" and "Onaconda Farr" use the spellings from what I saw in game
         # =========================================================
         # Red Brick state
         # =========================================================
 
-        self.archi_red_bricks = set()
-        self.expected_red_bricks = set()
-
         self.randomized_red_bricks = set()
         self.nonrandomized_red_bricks = set()
 
-        self.previous_1_8 = 0
-        self.previous_9_16 = 0
-        self.previous_17_18 = 0
+        self.red_brick_state = {
+            brick_number: {
+                "ap_received": False,
+                "collected": False,
+                "location_checked": False,
+            }
+            for brick_number in range(1, 19)
+        }
+        
+        self.actual_golds = 0
 
         # =========================================================
         # Character state
         # =========================================================
-
-        # Filled after Dolphin connects.
-        #
-        # Each character has three pieces of state:
-        #
-        #   ap_received:
-        #       Archipelago has actually given us this character.
-        #
-        #   bought:
-        #       The base game has naturally unlocked this character.
-        #       This includes mission/minikit/etc. unlocks, not
-        #       necessarily literally buying the character.
-        #
-        #   location_checked:
-        #       The character's AP location has already been sent.
-        #
-        # This gives us the complete state machine:
-        #
-        #   False, False -> nothing
-        #   False, True  -> check location, keep locked
-        #   True,  False -> unlock character
-        #   True,  True  -> unlock character, location checked
         #
         self.character_state = {}
 
@@ -209,11 +174,6 @@ class LSW3Context(CommonContext):
                     for character in self.game_memory.CHARACTERS
                 }
 
-                # Initialize red-brick watcher state.
-                self.previous_1_8 = self.game_memory.red_bricks_1_8
-                self.previous_9_16 = self.game_memory.red_bricks_9_16
-                self.previous_17_18 = self.game_memory.red_bricks_17_18
-
                 asyncio.create_task(self.game_watcher())
 
             except RuntimeError as e:
@@ -230,8 +190,21 @@ class LSW3Context(CommonContext):
         while True:
             await self.check_red_bricks()
             await self.check_characters()
+            await self.check_characters()
 
             await asyncio.sleep(0.1)
+            
+    async def check_gold_bricks(self):
+        # Gold Bricks can reset when changing zones.
+        # Reapply the number actually awarded by AP.
+        if self.game_memory.gold_bricks < self.actual_golds:
+            print(
+                f"Restoring Gold Bricks: "
+                f"{self.game_memory.gold_bricks} -> "
+                f"{self.actual_golds}"
+            )
+        
+            self.game_memory.gold_bricks = self.actual_golds
 
     # =============================================================
     # Characters
@@ -382,57 +355,34 @@ class LSW3Context(CommonContext):
     # =============================================================
 
     async def check_red_bricks(self):
-        current_1_8 = self.game_memory.red_bricks_1_8
-        current_9_16 = self.game_memory.red_bricks_9_16
-        current_17_18 = self.game_memory.red_bricks_17_18
+        for brick_number in range(1, 19):
+            state = self.red_brick_state[brick_number]
 
-        # ---------------------------------------------------------
-        # Red Bricks 1-8
-        # ---------------------------------------------------------
+            ap_received = state["ap_received"]
+            location_checked = state["location_checked"]
+            is_unlocked = self.game_memory.red_brick_unlocked(brick_number)
 
-        for brick_number in range(1, 9):
-            bit = 1 << (brick_number - 1)
+            if is_unlocked and not ap_received:
+                state["collected"] = True
 
-            was_unlocked = self.previous_1_8 & bit
-            is_unlocked = current_1_8 & bit
-
-            if not was_unlocked and is_unlocked:
+            if (
+                state["collected"]
+                and not ap_received
+                and not location_checked
+            ):
                 await self.red_brick_collected(brick_number)
 
-        # ---------------------------------------------------------
-        # Red Bricks 9-16
-        # ---------------------------------------------------------
+                state["location_checked"] = True
 
-        for brick_number in range(9, 17):
-            bit = 1 << (brick_number - 9)
+                # Remove the physical collection from the game.
+                self.game_memory.lock_red_brick_unlock_flag(brick_number)
 
-            was_unlocked = self.previous_9_16 & bit
-            is_unlocked = current_9_16 & bit
+            if ap_received and not is_unlocked:
+                self.game_memory.unlock_red_brick(brick_number)
 
-            if not was_unlocked and is_unlocked:
-                await self.red_brick_collected(brick_number)
-
-        # ---------------------------------------------------------
-        # Red Bricks 17-18
-        # ---------------------------------------------------------
-
-        for brick_number in range(17, 19):
-            bit = 1 << (brick_number - 17)
-
-            was_unlocked = self.previous_17_18 & bit
-            is_unlocked = current_17_18 & bit
-
-            if not was_unlocked and is_unlocked:
-                await self.red_brick_collected(brick_number)
-
-        # Save current state for the next watcher iteration.
-        self.previous_1_8 = current_1_8
-        self.previous_9_16 = current_9_16
-        self.previous_17_18 = current_17_18
-
-        # ---------------------------------------------------------
+        # -------------------------------------------------------------
         # Goal
-        # ---------------------------------------------------------
+        # -------------------------------------------------------------
 
         if (
             not self.goal_sent
@@ -442,7 +392,7 @@ class LSW3Context(CommonContext):
 
             await self.send_msgs([{
                 "cmd": "StatusUpdate",
-                "status": 30,  # CLIENT_GOAL
+                "status": 30,
             }])
 
             self.goal_sent = True
@@ -450,30 +400,8 @@ class LSW3Context(CommonContext):
     async def red_brick_collected(self, brick_number):
         name = f"Red Brick {brick_number}"
 
-        # ---------------------------------------------------------
-        # AP caused this brick to appear.
-        # ---------------------------------------------------------
-
-        if brick_number in self.expected_red_bricks:
-            print(
-                f"{name} appeared because Archipelago gave it to us."
-            )
-
-            self.expected_red_bricks.remove(brick_number)
-
-            # Don't let the game count the AP-granted brick
-            # as a physical collection.
-            self.game_memory.lock_red_brick_count(brick_number)
-
-            return
-
-        # ---------------------------------------------------------
-        # Player physically collected it.
-        # ---------------------------------------------------------
-
-        print(f"Detected physical collection of {name}")
-
         # This brick is not randomized.
+        # Let the base game handle it normally.
         if brick_number not in self.randomized_red_bricks:
             print(
                 f"{name} is not randomized. "
@@ -481,7 +409,6 @@ class LSW3Context(CommonContext):
             )
             return
 
-        # This brick is randomized, so report the location.
         print(
             f"{name} is randomized. "
             f"Sending location check."
@@ -494,9 +421,6 @@ class LSW3Context(CommonContext):
             "cmd": "LocationChecks",
             "locations": [location_id],
         }])
-
-        # Remove the physical collection from the game.
-        self.game_memory.lock_red_brick_unlock_flag(brick_number)
 
     # =============================================================
     # Archipelago packets
@@ -583,21 +507,20 @@ class LSW3Context(CommonContext):
             )
 
             return
-
         # ---------------------------------------------------------
         # Gold Brick
         # ---------------------------------------------------------
 
         if item.item == ITEM_GOLD_BRICK:
-            current = self.game_memory.gold_bricks
+            self.actual_golds += 1
 
-            if current < 255:
-                self.game_memory.gold_bricks = current + 1
+            if self.game_memory.gold_bricks < self.actual_golds:
+                self.game_memory.gold_bricks = self.actual_golds
 
-                print(
-                    f"Received Gold Brick! "
-                    f"{current} -> {current + 1}"
-                )
+            print(
+                f"Received Gold Brick! "
+                f"AP gold total: {self.actual_golds}"
+            )
 
             return
 
@@ -609,18 +532,15 @@ class LSW3Context(CommonContext):
             if item.item == item_id:
                 brick_number = int(name.split()[-1])
 
-                self.archi_red_bricks.add(brick_number)
-                self.expected_red_bricks.add(brick_number)
+                state = self.red_brick_state[brick_number]
 
-                self.game_memory.unlock_red_brick(
-                    brick_number
-                )
+                state["ap_received"] = True
+                state["collected"] = True
 
-                print(
-                    f"Archipelago gave {name}. "
-                    f"Physical brick is now available."
-                )
+                self.game_memory.unlock_red_brick(brick_number)
 
+                print(f"Archipelago gave {name}.")
+                
                 return
 
         # ---------------------------------------------------------
