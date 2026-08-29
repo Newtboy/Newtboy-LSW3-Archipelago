@@ -23,11 +23,189 @@ from .Locations import (
     STUD_LOCATION_IDS,
 )
 
-from .LSW3Client.client import (
+from .character_regions import (
     minikit_characters,
     brig_characters,
     ground_battle_characters,
 )
+
+########################################## Launcher Code ###################################################
+
+from worlds.LauncherComponents import Component, components, Type, launch
+
+import json
+import subprocess
+import tkinter as tk
+from pathlib import Path
+from tkinter import filedialog, messagebox
+import asyncio
+
+CONFIG_DIR = Path.home() / "AppData" / "Roaming" / "Archipelago" / "LSW3"
+CONFIG_FILE = CONFIG_DIR / "config.json"
+
+
+def run_client_launcher(*args: str):
+    asyncio.run(run_client(*args))
+
+
+def show_message(title: str, message: str):
+    root = tk.Tk()
+    root.withdraw()
+
+    messagebox.showinfo(
+        title,
+        message,
+        parent=root,
+    )
+
+    root.destroy()
+
+
+def ask_dolphin_path():
+    root = tk.Tk()
+    root.withdraw()
+
+    path = filedialog.askopenfilename(
+        title="Select Dolphin Emulator",
+        filetypes=[
+            ("Dolphin Emulator", "Dolphin.exe"),
+            ("Executable files", "*.exe"),
+            ("All files", "*.*"),
+        ],
+        parent=root,
+    )
+
+    root.destroy()
+
+    return path
+
+
+def get_dolphin_path():
+    if CONFIG_FILE.exists():
+        try:
+            with CONFIG_FILE.open("r", encoding="utf-8") as f:
+                config = json.load(f)
+
+            path = Path(config.get("dolphin_path", ""))
+
+            if path.is_file():
+                return path
+
+        except (OSError, json.JSONDecodeError):
+            pass
+
+    path = ask_dolphin_path()
+
+    if not path:
+        return None
+
+    path = Path(path)
+
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+
+    with CONFIG_FILE.open("w", encoding="utf-8") as f:
+        json.dump(
+            {
+                "dolphin_path": str(path),
+            },
+            f,
+            indent=4,
+        )
+
+    return path
+
+
+def show_step(message: str):
+    show_message(
+        "LEGO Star Wars III: The Clone Wars",
+        message,
+    )
+
+
+import psutil
+
+
+def dolphin_is_running():
+    for process in psutil.process_iter(["name"]):
+        try:
+            if process.info["name"] and process.info["name"].lower() == "dolphin.exe":
+                return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            pass
+
+    return False
+
+
+def run_client(*launcher_args):
+    parser = get_base_parser(
+        description="LEGO Star Wars III: The Clone Wars Archipelago Client."
+    )
+
+    args = parser.parse_args(launcher_args)
+
+    async def _run():
+        ctx = LSW3Context(args.connect, args.password)
+
+        if gui_enabled:
+            ctx.run_gui()
+
+        await server_loop(ctx, args)
+
+    asyncio.run(_run())
+
+
+def main():
+    run_client()
+
+
+if __name__ == "__main__":
+    main()
+
+
+def launch_client(*args):
+    dolphin_path = get_dolphin_path()
+
+    if dolphin_path is None:
+        return
+
+    print(f"Launching Dolphin: {dolphin_path}")
+
+    if not dolphin_is_running():
+        subprocess.Popen([str(dolphin_path)])
+
+    show_step(
+        "Open LEGO Star Wars III."
+    )
+
+    show_step(
+        "Load/Create a save file.\n\n"
+        "Do not start the game."
+    )
+
+    show_step(
+        "Launching client."
+    )
+
+    from .LSW3Client.client import run_client
+
+    launch(
+        run_client,
+        name="LEGO Star Wars III: The Clone Wars Client",
+    )
+
+
+components.append(
+    Component(
+        display_name="LEGO Star Wars III: The Clone Wars",
+        func=launch_client,
+        component_type=Type.CLIENT,
+        game_name="LEGO Star Wars III: The Clone Wars",
+        description="Archipelago client for LEGO Star Wars III: The Clone Wars.",
+    )
+)
+
+
+########################################## Launcher World End ################################################
 
 class LSW3World(World):
     game = GAME_NAME
@@ -136,13 +314,13 @@ class LSW3World(World):
         forced_characters = set()
 
         if self.options.use_minikit_characters.value:
-            forced_characters.update(MINIKIT_CHARACTERS)
+            forced_characters.update(minikit_characters)
 
         if self.options.use_groundBattle_characters.value:
-            forced_characters.update(GROUND_BATTLE_CHARACTERS)
+            forced_characters.update(ground_battle_characters)
 
         if self.options.use_brig_characters.value:
-            forced_characters.update(BRIG_CHARACTERS)
+            forced_characters.update(brig_characters)
 
         # The percentage only applies to characters that aren't
         # already being forced into the randomized pool.
@@ -251,174 +429,6 @@ class LSW3World(World):
                 int(name.split()[-1])
                 for name in self.randomized_red_bricks
             ],
+            "haveWallets": self.options.progressive_wallets.value,
         }
         
-########################################## Launcher Code ###################################################
-
-from worlds.LauncherComponents import Component, components, Type, launch
-
-import json
-import subprocess
-import tkinter as tk
-from pathlib import Path
-from tkinter import filedialog, messagebox
-import asyncio
-
-CONFIG_DIR = Path.home() / "AppData" / "Roaming" / "Archipelago" / "LSW3"
-CONFIG_FILE = CONFIG_DIR / "config.json"
-
-def run_client_launcher(*args: str):
-    asyncio.run(run_client(*args))
-
-def show_message(title: str, message: str):
-    root = tk.Tk()
-    root.withdraw()
-
-    messagebox.showinfo(
-        title,
-        message,
-        parent=root,
-    )
-
-    root.destroy()
-
-
-def ask_dolphin_path():
-    root = tk.Tk()
-    root.withdraw()
-
-    path = filedialog.askopenfilename(
-        title="Select Dolphin Emulator",
-        filetypes=[
-            ("Dolphin Emulator", "Dolphin.exe"),
-            ("Executable files", "*.exe"),
-            ("All files", "*.*"),
-        ],
-        parent=root,
-    )
-
-    root.destroy()
-
-    return path
-
-
-def get_dolphin_path():
-    if CONFIG_FILE.exists():
-        try:
-            with CONFIG_FILE.open("r", encoding="utf-8") as f:
-                config = json.load(f)
-
-            path = Path(config.get("dolphin_path", ""))
-
-            if path.is_file():
-                return path
-
-        except (OSError, json.JSONDecodeError):
-            pass
-
-    path = ask_dolphin_path()
-
-    if not path:
-        return None
-
-    path = Path(path)
-
-    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-
-    with CONFIG_FILE.open("w", encoding="utf-8") as f:
-        json.dump(
-            {
-                "dolphin_path": str(path),
-            },
-            f,
-            indent=4,
-        )
-
-    return path
-
-
-def show_step(message: str):
-    show_message(
-        "LEGO Star Wars III: The Clone Wars",
-        message,
-    )
-
-import psutil
-
-def dolphin_is_running():
-    for process in psutil.process_iter(["name"]):
-        try:
-            if process.info["name"] and process.info["name"].lower() == "dolphin.exe":
-                return True
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
-            pass
-
-    return False
-
-def run_client(*launcher_args):
-    parser = get_base_parser(
-        description="LEGO Star Wars III: The Clone Wars Archipelago Client."
-    )
-
-    args = parser.parse_args(launcher_args)
-
-    async def _run():
-        ctx = LSW3Context(args.connect, args.password)
-
-        if gui_enabled:
-            ctx.run_gui()
-
-        await server_loop(ctx, args)
-
-    asyncio.run(_run())
-
-
-def main():
-    run_client()
-
-
-if __name__ == "__main__":
-    main()
-
-def launch_client(*args):
-    dolphin_path = get_dolphin_path()
-
-    if dolphin_path is None:
-        return
-
-    print(f"Launching Dolphin: {dolphin_path}")
-
-    if not dolphin_is_running():
-        subprocess.Popen([str(dolphin_path)])
-
-    show_step(
-        "Open LEGO Star Wars III."
-    )
-
-    show_step(
-        "Load/Create a save file.\n\n"
-        "Do not start the game."
-    )
-
-    show_step(
-        "Launching client."
-    )
-
-    from .LSW3Client.client import run_client
-
-    launch(
-        run_client,
-        name="LEGO Star Wars III: The Clone Wars Client",
-    )
-    
-components.append(
-    Component(
-        display_name="LEGO Star Wars III: The Clone Wars",
-        func=launch_client,
-        component_type=Type.CLIENT,
-        game_name="LEGO Star Wars III: The Clone Wars",
-        description="Archipelago client for LEGO Star Wars III: The Clone Wars.",
-    )
-)
-
-########################################## Launcher World End ################################################

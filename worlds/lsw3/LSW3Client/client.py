@@ -1,5 +1,7 @@
 import warnings
 
+from tkinter import messagebox
+
 warnings.filterwarnings(
     "ignore",
     message="_speedups not available.*",
@@ -44,6 +46,15 @@ from worlds.lsw3.Locations import (
     STUD_LOCATION_IDS
 )
 
+from .lsw3_data_pointers import CHEAT_CODE_CHARACTERS as chs
+
+from ..character_regions import (
+    hub_characters,
+    brig_characters,
+    minikit_characters,
+    ground_battle_characters
+)
+
 
 class LSW3Context(CommonContext):
     game = "LEGO Star Wars III: The Clone Wars"
@@ -56,97 +67,12 @@ class LSW3Context(CommonContext):
         self.game_memory = None
         
         self.wallet_level = 1
+
+        self.haveWallets = False
         
         self.stud_locations_checked = set()
 
-        # =========================================================
-        # Character configuration
-        # =========================================================
-        self.hub_characters = {
-            "Cad Bane",
-            "Count Dooku",
-            "Admiral Yularen",
-            "Jango Fett",
-            "R4-P17",
-            "Neimoidian",
-            "Battle Droid",
-            "Super Battle Droid",
-            "Gonk Droid",
-            "LEP Servant Droid",
-            "Gold Super Battle Droid",
-            "Droideka",
-            "Captain Typho",
-            "Queen Neeyutnee",
-            "Battle Droid Commander",
-            "Hondo Ohnaka",
-            "Pirate Ruffian",
-            "Senator Kharrus",
-            "Tee Watt Kaa",
-            "Turk Falso",
-            "Probe Droid",
-            "Lurmen Villager",
-            "TX-20",
-            "Geonosian Guard",
-            "Workout Clone Trooper",
-            "Bib Fortuna",
-            "Undead Geonosian",
-            "Heavy Super Battle Droid",
-            "R6-H5",
-            "Clone Pilot",
-            "MSE-6",
-            "Sionver Boll",
-            "Bail Organa",
-            "Luxury Droid",
-            "Onaconda Farr",
-            "Senator Philo",
-            "Senate Commando (Captain)",
-            "Senate Commando",
-            "Gamorrean Guard",
-            "General Grievous",
-        }
-        
-        self.minikit_characters = {
-            "Admiral Ackbar (Classic)",
-            "Captain Antilles (Classic)",
-            "Chewbacca (Classic)",
-            "Han Solo (Classic)",
-            "Lando Calrissian (Classic)",
-            "Princess Leia (Classic)",
-            "Luke Skywalker (Classic)",
-            "Obi-Wan Kenobi (Classic)",
-            "Qui-Gon Jinn (Classic)",
-            "Rebel Commando (Classic)",
-            "Wedge Antilles (Classic)",
-            "Boba Fett (Classic)",
-            "Greedo (Classic)",
-            "Darth Maul (Classic)",
-            "Darth Sidious (Classic)",
-            "Darth Vader (Classic)",
-            "Darth Vader Battle Damaged (Classic)",
-            "Vader’s Apprentice (Classic)",
-            "Imperial Guard (Classic)",
-            "Clone Shadow Trooper (Classic)",
-            "Stormtrooper (Classic)",
-            "Tusken Raider (Classic)",
-        }
-        
-        self.brig_characters = {
-            "Dr Nuvo Vindi",
-            "Wat Tambor",
-            "Lok Durd",
-            "Poggle the Lesser",
-            "Nute Gunray",
-            "Whorm Loathsom",
-        }
-        
-        self.ground_battle_characters = {
-            "Chancellor Palpatine",
-            "Grand Moff Tarkin"
-        }
 
-        # NOTE:
-        # "Destroyer Droid" is listed as "Droideka" instead
-        # "Siover Boll" and "Onaconda Farr" use the spellings from what I saw in game
         # =========================================================
         # Red Brick state
         # =========================================================
@@ -240,8 +166,6 @@ class LSW3Context(CommonContext):
                 self.game_memory = LSW3Memory()
                 print("Connected to Dolphin!")
 
-                # Initialize character state now that we know the
-                # actual character list from LSW3Memory.
                 self.character_state = {
                     character: {
                         "ap_received": False,
@@ -253,8 +177,17 @@ class LSW3Context(CommonContext):
 
                 asyncio.create_task(self.game_watcher())
 
-            except RuntimeError as e:
-                print(f"WARNING: {e}")
+            except Exception as e:
+                print(f"ERROR: {e}")
+
+                messagebox.showerror(
+                    "Error",
+                    "An error has occurred.\n\n"
+                    f"{e}"
+                )
+
+                self.exit_event.set()
+                return
 
         await self.get_username()
         await self.send_connect()
@@ -267,12 +200,31 @@ class LSW3Context(CommonContext):
         while True:
             await self.check_red_bricks()
             await self.check_characters()
-            await self.check_studs()
+            if self.haveWallets:
+                await self.check_studs()
             await self.check_stud_locations()
             await self.check_gold_bricks()
+            await self.check_cheat_code()
 
             await asyncio.sleep(0.1)
-            
+
+    async def check_cheat_code(self):
+        chars = [
+            13,  # N
+            26,  # 0
+            2,  # C
+            20,  # U
+            19,  # T
+            31,  # 5
+        ]
+
+        for i in range(len(chs)):
+            address = chs[i]
+            value = chars[i]
+
+            self.game_memory.write_bytes(address, bytes([value]))
+
+
     async def check_studs(self):
         if self.game_memory.studs > self.wallet_cap:
             self.game_memory.studs = self.wallet_cap
@@ -468,11 +420,11 @@ class LSW3Context(CommonContext):
         # -------------------------------------------------------------
 
         if (
-                not self.goal_sent
-                and all(
-            self.game_memory.red_brick_unlocked(brick_number)
-            for brick_number in self.randomized_red_bricks
-        )
+             not self.goal_sent
+             and all(
+                 self.game_memory.red_brick_unlocked(brick_number)
+                 for brick_number in self.randomized_red_bricks
+            )
         ):
             print("All Randomized Red Bricks collected! Game complete.")
 
@@ -523,6 +475,8 @@ class LSW3Context(CommonContext):
             self.randomized_red_bricks = set(
                 args["slot_data"]["randomized_red_bricks"]
             )
+
+            self.haveWallets = args["slot_data"]["haveWallets"]
 
             self.nonrandomized_red_bricks = (
                 set(range(1, 19))
