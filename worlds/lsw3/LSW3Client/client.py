@@ -104,6 +104,45 @@ class LSW3Context(CommonContext):
             "Gamorrean Guard",
             "General Grievous",
         }
+        
+        self.minikit_characters = {
+            "Admiral Ackbar (Classic)",
+            "Captain Antilles (Classic)",
+            "Chewbacca (Classic)",
+            "Han Solo (Classic)",
+            "Lando Calrissian (Classic)",
+            "Princess Leia (Classic)",
+            "Luke Skywalker (Classic)",
+            "Obi-Wan Kenobi (Classic)",
+            "Qui-Gon Jinn (Classic)",
+            "Rebel Commando (Classic)",
+            "Wedge Antilles (Classic)",
+            "Boba Fett (Classic)",
+            "Greedo (Classic)",
+            "Darth Maul (Classic)",
+            "Darth Sidious (Classic)",
+            "Darth Vader (Classic)",
+            "Darth Vader Battle Damaged (Classic)",
+            "Vader’s Apprentice (Classic)",
+            "Imperial Guard (Classic)",
+            "Clone Shadow Trooper (Classic)",
+            "Stormtrooper (Classic)",
+            "Tusken Raider (Classic)",
+        }
+        
+        self.brig_characters = {
+            "Dr Nuvo Vindi",
+            "Wat Tambor",
+            "Lok Durd",
+            "Poggle the Lesser",
+            "Nute Gunray",
+            "Whorm Loathsom",
+        }
+        
+        self.ground_battle_characters = {
+            "Chancellor Palpatine",
+            "Grand Moff Tarkin"
+        }
 
         # NOTE:
         # "Destroyer Droid" is listed as "Droideka" instead
@@ -230,6 +269,7 @@ class LSW3Context(CommonContext):
             await self.check_characters()
             await self.check_studs()
             await self.check_stud_locations()
+            await self.check_gold_bricks()
 
             await asyncio.sleep(0.1)
             
@@ -428,10 +468,13 @@ class LSW3Context(CommonContext):
         # -------------------------------------------------------------
 
         if (
-            not self.goal_sent
-            and self.game_memory.all_red_bricks_unlocked()
+                not self.goal_sent
+                and all(
+            self.game_memory.red_brick_unlocked(brick_number)
+            for brick_number in self.randomized_red_bricks
+        )
         ):
-            print("All 18 Red Bricks collected! Game complete.")
+            print("All Randomized Red Bricks collected! Game complete.")
 
             await self.send_msgs([{
                 "cmd": "StatusUpdate",
@@ -563,7 +606,7 @@ class LSW3Context(CommonContext):
             ]
 
             self.wallet_cap = wallet_caps[
-                min(self.wallet_level - 1, len(wallet_caps) - 1)
+                min(self.wallet_level, len(wallet_caps) - 1)
             ]
 
             print(
