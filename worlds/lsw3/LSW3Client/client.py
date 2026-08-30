@@ -106,9 +106,10 @@ class LSW3Context(CommonContext):
         studs = self.game_memory.studs
 
         stud_thresholds = [
-            10000,
-            100000,
-            1000000,
+            10_000,
+            100_000,
+            1_000_000,
+            10_000_000,
         ]
 
         for threshold in stud_thresholds:
@@ -372,7 +373,9 @@ class LSW3Context(CommonContext):
         # is not the same thing as the player naturally obtaining it.
         #
         if (
-            character in self.hub_characters
+            (character in self.hub_characters
+            or character in self.minikit_characters
+            or character in self.brig_characters)
             and not state["bought"]
             and not state["location_checked"]
         ):
