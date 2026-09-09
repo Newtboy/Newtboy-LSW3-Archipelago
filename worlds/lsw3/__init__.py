@@ -23,6 +23,12 @@ from .Locations import (
     STUD_LOCATION_IDS,
 )
 
+from .character_regions import (
+    minikit_characters,
+    brig_characters,
+    ground_battle_characters,
+)
+
 ########################################## Launcher Code ###################################################
 
 from worlds.LauncherComponents import Component, components, Type, launch
@@ -37,8 +43,10 @@ import asyncio
 CONFIG_DIR = Path.home() / "AppData" / "Roaming" / "Archipelago" / "LSW3"
 CONFIG_FILE = CONFIG_DIR / "config.json"
 
+
 def run_client_launcher(*args: str):
     asyncio.run(run_client(*args))
+
 
 def show_message(title: str, message: str):
     root = tk.Tk()
@@ -113,7 +121,9 @@ def show_step(message: str):
         message,
     )
 
+
 import psutil
+
 
 def dolphin_is_running():
     for process in psutil.process_iter(["name"]):
@@ -124,6 +134,7 @@ def dolphin_is_running():
             pass
 
     return False
+
 
 def run_client(*launcher_args):
     parser = get_base_parser(
@@ -149,6 +160,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 def launch_client(*args):
     dolphin_path = get_dolphin_path()
@@ -180,7 +192,8 @@ def launch_client(*args):
         run_client,
         name="LEGO Star Wars III: The Clone Wars Client",
     )
-    
+
+
 components.append(
     Component(
         display_name="LEGO Star Wars III: The Clone Wars",
@@ -190,6 +203,7 @@ components.append(
         description="Archipelago client for LEGO Star Wars III: The Clone Wars.",
     )
 )
+
 
 ########################################## Launcher World End ################################################
 
@@ -282,37 +296,87 @@ class LSW3World(World):
 
     def create_items(self):
         red_brick_count = self.options.red_brick_count.value
-                
-        character_count = round(len(CHARACTER_ITEM_IDS) * self.options.character_percent.value / 100)
+
+        # =========================================================
+        # Red Bricks
+        # =========================================================
 
         self.randomized_red_bricks = self.random.sample(
             list(RED_BRICK_ITEM_IDS.keys()),
             red_brick_count,
         )
-        
+
+        # =========================================================
+        # Characters
+        # =========================================================
+
+        # Characters forced into the randomized pool by toggles.
+        forced_characters = set()
+
+        if self.options.use_minikit_characters.value:
+            forced_characters.update(minikit_characters)
+
+        if self.options.use_groundBattle_characters.value:
+            forced_characters.update(ground_battle_characters)
+
+        if self.options.use_brig_characters.value:
+            forced_characters.update(brig_characters)
+
+        # The percentage only applies to characters that aren't
+        # already being forced into the randomized pool.
+        randomizable_characters = (
+                set(CHARACTER_ITEM_IDS.keys()) - forced_characters
+        )
+
+        character_count = round(
+            len(randomizable_characters)
+            * self.options.character_percent.value
+            / 100
+        )
+
         self.randomized_characters = self.random.sample(
-            list(CHARACTER_ITEM_IDS.keys()),
+            list(randomizable_characters),
             character_count,
         )
-        
+
+        # Add the forced characters.
+        self.randomized_characters.extend(forced_characters)
+
+        # This is the ACTUAL number of randomized character locations.
+        randomized_character_count = len(self.randomized_characters)
+
+        # =========================================================
+        # Progressive Wallets
+        # =========================================================
+
         if self.options.progressive_wallets.value:
             for _ in range(3):
                 self.multiworld.itempool.append(
                     self.create_item("Progressive Wallet")
                 )
 
-        # Add randomized Red Bricks.
+        # =========================================================
+        # Randomized Red Bricks
+        # =========================================================
+
         for name in self.randomized_red_bricks:
             self.multiworld.itempool.append(
                 self.create_item(name)
             )
-        
-        for name in CHARACTER_ITEM_IDS:
+
+        # =========================================================
+        # Randomized Characters
+        # =========================================================
+
+        for name in self.randomized_characters:
             self.multiworld.itempool.append(
                 self.create_item(name)
             )
 
-        # Fill remaining locations with filler.
+        # =========================================================
+        # Filler
+        # =========================================================
+
         filler_items = [
             "10 Studs",
             "100 Studs",
@@ -320,18 +384,28 @@ class LSW3World(World):
             "10000 Studs",
         ]
 
-        remaining = len(RED_BRICK_LOCATION_IDS) - red_brick_count
-        remaining = remaining + (len(CHARACTER_LOCATION_IDS) - character_count)
-        if not bool(self.options.progressive_wallets.value):
+        # Non-randomized red brick locations.
+        remaining = (
+                len(RED_BRICK_LOCATION_IDS)
+                - red_brick_count
+        )
+
+        # Non-randomized character locations.
+        remaining += (
+                len(CHARACTER_LOCATION_IDS)
+                - randomized_character_count
+        )
+
+        # Three wallet locations/items if wallets aren't enabled.
+        if not self.options.progressive_wallets.value:
             remaining += 3
 
         for _ in range(remaining):
-            name = self.random.choice(filler_items)
-
             self.multiworld.itempool.append(
-                self.create_item(name)
+                self.create_item(
+                    self.random.choice(filler_items)
+                )
             )
-            
     def create_item(self, name):
         return LSW3Item(
             name,
@@ -343,7 +417,7 @@ class LSW3World(World):
     def set_rules(self):
         self.multiworld.completion_condition[self.player] = lambda state: all(
             state.has(name, self.player)
-            for name in RED_BRICK_ITEM_IDS
+            for name in self.randomized_red_bricks
         )
         
     def generate_basic(self):
@@ -355,4 +429,6 @@ class LSW3World(World):
                 int(name.split()[-1])
                 for name in self.randomized_red_bricks
             ],
+            "haveWallets": self.options.progressive_wallets.value,
         }
+        

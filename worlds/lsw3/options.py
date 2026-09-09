@@ -24,9 +24,24 @@ class ProgressiveWallets(Toggle):
     """Progressive Wallets"""
     display_name = "Progressive Wallets"
     
+class RandomizeMinikitCharacters(Toggle):
+    """Randomize Minikit Characters"""
+    display_name = "Randomize Minkit Characters?"
+    
+class RandomizeGroundBattleCharacters(Toggle):
+    """Randomize Ground Battle Characters"""
+    display_name = "Randomize Ground Battle Characters?"
+
+class RandomizeBrigCharacters(Toggle):
+    """Randomize Brig Characters"""
+    display_name = "Randomize Brig Characters?"
+    
     
 @dataclass
 class LSW3Options(PerGameCommonOptions):
     red_brick_count: RedBrickCount
     character_percent: CharacterCountPercentage
     progressive_wallets: ProgressiveWallets
+    use_minikit_characters: RandomizeMinikitCharacters
+    use_groundBattle_characters: RandomizeGroundBattleCharacters
+    use_brig_characters: RandomizeBrigCharacters

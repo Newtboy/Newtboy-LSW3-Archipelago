@@ -2,6 +2,8 @@ import warnings
 
 from worlds.lsw3.LSW3Client import lsw3_data_pointers
 
+from tkinter import messagebox
+
 warnings.filterwarnings(
     "ignore",
     message="_speedups not available.*",
@@ -46,6 +48,15 @@ from worlds.lsw3.Locations import (
     STUD_LOCATION_IDS
 )
 
+from .lsw3_data_pointers import CHEAT_CODE_CHARACTERS as chs
+
+from ..character_regions import (
+    hub_characters,
+    brig_characters,
+    minikit_characters,
+    ground_battle_characters
+)
+
 
 class LSW3Context(CommonContext):
     game = "LEGO Star Wars III: The Clone Wars"
@@ -58,12 +69,12 @@ class LSW3Context(CommonContext):
         self.game_memory = None
         
         self.wallet_level = 1
-        
+
+        self.haveWallets = False
+
         self.stud_locations_checked = set()
 
-        # =========================================================
-        # Character configuration
-        # =========================================================
+
         self.hub_characters = {
             "Cad Bane",
             "Count Dooku",
@@ -194,8 +205,6 @@ class LSW3Context(CommonContext):
                 self.game_memory = LSW3Memory()
                 print("Connected to Dolphin!")
 
-                # Initialize character state now that we know the
-                # actual character list from LSW3Memory.
                 self.character_state = {
                     character: {
                         "ap_received": False,
@@ -222,8 +231,11 @@ class LSW3Context(CommonContext):
             await self.check_connection()
             await self.check_red_bricks()
             await self.check_characters()
-            await self.check_studs()
+            if self.haveWallets:
+                await self.check_studs()
             await self.check_stud_locations()
+            await self.check_gold_bricks()
+            await self.check_cheat_code()
 
             await asyncio.sleep(0.1)
 
@@ -231,7 +243,25 @@ class LSW3Context(CommonContext):
         import dolphin_memory_engine as dme
         if dme.get_status() == dme.get_status().unHooked:
             ConnectionResetError("Make sure dolphin is running.")
-            
+
+
+    async def check_cheat_code(self):
+        chars = [
+            13,  # N
+            26,  # 0
+            2,  # C
+            20,  # U
+            19,  # T
+            31,  # 5
+        ]
+
+        for i in range(len(chs)):
+            address = chs[i]
+            value = chars[i]
+
+            self.game_memory.write_bytes(address, bytes([value]))
+
+
     async def check_studs(self):
         if self.game_memory.studs > self.wallet_cap:
             self.game_memory.studs = self.wallet_cap
@@ -317,7 +347,9 @@ class LSW3Context(CommonContext):
         )
 
         if (
-            character in self.hub_characters
+            (character in self.hub_characters
+            or character in self.minikit_characters
+            or character in self.brig_characters)
             and not state["bought"]
             and not state["location_checked"]
         ):
@@ -359,10 +391,13 @@ class LSW3Context(CommonContext):
 
         # IT'S JUST A SIMPLE NUMBERS GAME
         if (
-            not self.goal_sent
-            and self.game_memory.all_red_bricks_unlocked()
+             not self.goal_sent
+             and all(
+                 self.game_memory.red_brick_unlocked(brick_number)
+                 for brick_number in self.randomized_red_bricks
+            )
         ):
-            print("All 18 Red Bricks collected! Game complete.")
+            print("All Randomized Red Bricks collected! Game complete.")
 
             await self.send_msgs([{
                 "cmd": "StatusUpdate",
@@ -409,6 +444,8 @@ class LSW3Context(CommonContext):
             self.randomized_red_bricks = set(
                 args["slot_data"]["randomized_red_bricks"]
             )
+
+            self.haveWallets = args["slot_data"]["haveWallets"]
 
             self.nonrandomized_red_bricks = (
                 set(range(1, 19))
@@ -478,7 +515,7 @@ class LSW3Context(CommonContext):
             ]
 
             self.wallet_cap = wallet_caps[
-                min(self.wallet_level - 1, len(wallet_caps) - 1)
+                min(self.wallet_level, len(wallet_caps) - 1)
             ]
 
             print(
