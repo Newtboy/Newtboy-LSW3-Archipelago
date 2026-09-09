@@ -137,18 +137,22 @@ class LSW3Memory:
         self.write_u8(self.CHARACTERS[name], value)
 
     def character_unlocked(self, name):
+        """You know I guess I don't like writing docstrings"""
         return self.get_character(name) != 0
 
     def unlock_character(self, name):
+        """Same"""
         if name not in self.CHARACTERS:
             raise KeyError(f"Unknown character: {name}")
 
         self.set_character(name, 1)
 
     def lock_character(self, name):
+        """Same as described"""
         self.set_character(name, 0)
         
     def reset_managed_state(self):
+        """Set all to 0"""
         # Red Bricks
         self.red_bricks_1_8 = 0
         self.red_bricks_9_16 = 0
@@ -166,6 +170,7 @@ class LSW3Memory:
             self.lock_character(name)
 
     def unlock_red_brick(self, brick_number):
+        """Does as described"""
         if not 1 <= brick_number <= 18:
             raise ValueError("Red brick number must be between 1 and 18")
 
@@ -203,12 +208,14 @@ class LSW3Memory:
         return True
     
     def all_red_bricks_unlocked(self):
+        """Do we have all red bricks?"""
         return all(
             self.red_brick_unlocked(i)
             for i in range(1, 19)
         )
         
     def red_brick_unlocked(self, brick_number):
+        """Is the red brick unlocked?"""
         if not 1 <= brick_number <= 18:
             raise ValueError("Red brick number must be between 1 and 18")
 
