@@ -16,9 +16,11 @@ CHARACTER_LOCATION_IDS = {
 }
 
 studCheckLevels = [
-    10000,
-    100000,
-    1000000,
+    10_000,
+    100_000,
+    1_000_000,
+    10_000_000,
+    100_000_000
 ]
 
 STUD_LOCATION_IDS = {

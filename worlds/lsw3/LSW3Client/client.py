@@ -1,5 +1,7 @@
 import warnings
 
+from worlds.lsw3.LSW3Client import lsw3_data_pointers
+
 from tkinter import messagebox
 
 warnings.filterwarnings(
@@ -69,13 +71,56 @@ class LSW3Context(CommonContext):
         self.wallet_level = 1
 
         self.haveWallets = False
-        
+
         self.stud_locations_checked = set()
 
 
-        # =========================================================
-        # Red Brick state
-        # =========================================================
+        self.hub_characters = {
+            "Cad Bane",
+            "Count Dooku",
+            "Admiral Yularen",
+            "Jango Fett",
+            "R4-P17",
+            "Neimoidian",
+            "Battle Droid",
+            "Super Battle Droid",
+            "Gonk Droid",
+            "LEP Servant Droid",
+            "Gold Super Battle Droid",
+            "Droideka",
+            "Captain Typho",
+            "Queen Neeyutnee",
+            "Battle Droid Commander",
+            "Hondo Ohnaka",
+            "Pirate Ruffian",
+            "Senator Kharrus",
+            "Tee Watt Kaa",
+            "Turk Falso",
+            "Probe Droid",
+            "Lurmen Villager",
+            "TX-20",
+            "Geonosian Guard",
+            "Workout Clone Trooper",
+            "Bib Fortuna",
+            "Undead Geonosian",
+            "Heavy Super Battle Droid",
+            "R6-H5",
+            "Clone Pilot",
+            "MSE-6",
+            "Sionver Boll",
+            "Bail Organa",
+            "Luxury Droid",
+            "Onaconda Farr",
+            "Senator Philo",
+            "Senate Commando (Captain)",
+            "Senate Commando",
+            "Gamorrean Guard",
+            "General Grievous",
+        }
+
+        # NOTE:
+        # "Destroyer Droid" is listed as "Droideka" instead
+        # "Siover Boll" and "Onaconda Farr" use the spellings from what I saw in game
 
         self.randomized_red_bricks = set()
         self.nonrandomized_red_bricks = set()
@@ -94,10 +139,6 @@ class LSW3Context(CommonContext):
         self.wallet_level = 0
         self.wallet_cap = 10000
 
-        # =========================================================
-        # Character state
-        # =========================================================
-        #
         self.character_state = {}
 
         self.goal_sent = False
@@ -110,6 +151,7 @@ class LSW3Context(CommonContext):
             100_000,
             1_000_000,
             10_000_000,
+            100_000_000
         ]
 
         for threshold in stud_thresholds:
@@ -120,11 +162,6 @@ class LSW3Context(CommonContext):
                 location_name = f"{threshold} Studs"
                 location_id = STUD_LOCATION_IDS[location_name]
 
-                print(
-                    f"Reached {threshold:,} studs! "
-                    f"Checking location."
-                )
-
                 await self.send_msgs([{
                     "cmd": "LocationChecks",
                     "locations": [location_id],
@@ -132,11 +169,10 @@ class LSW3Context(CommonContext):
 
                 self.stud_locations_checked.add(threshold)
 
-    # =============================================================
-    # GUI
-    # =============================================================
 
+    # Gui, what do you want me to say?
     def run_gui(self):
+        """GUI booter"""
         from kvui import GameManager
 
         class LSW3Manager(GameManager):
@@ -153,12 +189,14 @@ class LSW3Context(CommonContext):
             name="UI"
         )
 
-    # =============================================================
-    # Connection
-    # =============================================================
-
+    # Entre de server
     async def server_auth(self, password_requested=False):
+        """Check with server, connect and setup"""
         await super().server_auth(password_requested)
+        import dolphin_memory_engine as dme
+
+        if dme.get_status() == dme.get_status().unHooked:
+            ConnectionResetError("Make sure dolphin is running.")
 
         if self.game_memory is None:
             print("Connecting to Dolphin...")
@@ -178,27 +216,19 @@ class LSW3Context(CommonContext):
 
                 asyncio.create_task(self.game_watcher())
 
-            except Exception as e:
-                print(f"ERROR: {e}")
-
-                messagebox.showerror(
-                    "Error",
-                    "An error has occurred.\n\n"
-                    f"{e}"
-                )
-
-                self.exit_event.set()
-                return
+            except RuntimeError as e:
+                print(f"WARNING: {e}")
+            except ConnectionResetError as e:
+                print("Reboot dolphin.")
 
         await self.get_username()
         await self.send_connect()
 
-    # =============================================================
-    # Game watcher
-    # =============================================================
-
+    # lookit da game
     async def game_watcher(self):
+        """Checks various aspects of the game and ensures running correctly"""
         while True:
+            await self.check_connection()
             await self.check_red_bricks()
             await self.check_characters()
             if self.haveWallets:
@@ -208,6 +238,12 @@ class LSW3Context(CommonContext):
             await self.check_cheat_code()
 
             await asyncio.sleep(0.1)
+
+    async def check_connection(self):
+        import dolphin_memory_engine as dme
+        if dme.get_status() == dme.get_status().unHooked:
+            ConnectionResetError("Make sure dolphin is running.")
+
 
     async def check_cheat_code(self):
         chars = [
@@ -242,25 +278,9 @@ class LSW3Context(CommonContext):
         
             self.game_memory.gold_bricks = self.actual_golds
 
-    # =============================================================
     # Characters
-    # =============================================================
-
     async def check_characters(self):
-        """
-        Synchronize character state between the game and AP.
-
-        The important distinction is:
-
-            game_unlocked != AP_owned
-
-        A character naturally unlocked by the game becomes a
-        LocationCheck, but does NOT become AP-owned.
-
-        A character received from AP becomes AP-owned and remains
-        unlocked regardless of whether the player has naturally
-        obtained it.
-        """
+        """go through lsw characters and ensure they're in the right state"""
 
         for character in self.game_memory.CHARACTERS:
             state = self.character_state[character]
@@ -271,38 +291,15 @@ class LSW3Context(CommonContext):
 
             is_unlocked = self.game_memory.character_unlocked(character)
 
-            # -----------------------------------------------------
-            # Detect a natural game unlock.
-            # -----------------------------------------------------
-            #
-            # If AP does not own the character, any unlock detected
-            # in memory is the player obtaining the character through
-            # normal game progression.
-            #
             if is_unlocked and not ap_received:
                 state["bought"] = True
                 bought = True
 
-            # -----------------------------------------------------
-            # AP owns the character.
-            # -----------------------------------------------------
-            #
-            # AP ownership always wins. If something in the game
-            # causes the character to become locked, restore it.
-            #
             if ap_received:
                 if not is_unlocked:
                     self.game_memory.unlock_character(character)
 
-            # -----------------------------------------------------
-            # Player naturally obtained the character.
-            # -----------------------------------------------------
-            #
-            # This is an AP location check, NOT an AP item receipt.
-            #
-            # After checking the location, lock the character again
-            # unless AP has separately given us the character.
-            #
+
             elif bought:
                 if not location_checked:
                     await self.character_collected(character)
@@ -339,10 +336,6 @@ class LSW3Context(CommonContext):
 
         state = self.character_state[character]
 
-        # ---------------------------------------------------------
-        # AP owns the character.
-        # ---------------------------------------------------------
-
         state["ap_received"] = True
 
         # Give the character immediately.
@@ -353,25 +346,6 @@ class LSW3Context(CommonContext):
             f"{character}"
         )
 
-        # ---------------------------------------------------------
-        # Hub character special case.
-        # ---------------------------------------------------------
-        #
-        # If this character can normally be bought directly in the
-        # hub, receiving it from AP before buying it would otherwise
-        # make its own location inaccessible.
-        #
-        # Therefore:
-        #
-        #   AP gives character
-        #       ↓
-        #   unlock character
-        #       ↓
-        #   check character location
-        #
-        # We do NOT mark "bought" here. AP receiving the character
-        # is not the same thing as the player naturally obtaining it.
-        #
         if (
             (character in self.hub_characters
             or character in self.minikit_characters
@@ -388,10 +362,7 @@ class LSW3Context(CommonContext):
 
             state["location_checked"] = True
 
-    # =============================================================
-    # Red Bricks
-    # =============================================================
-
+    # Red Brick Stuff
     async def check_red_bricks(self):
         for brick_number in range(1, 19):
             state = self.red_brick_state[brick_number]
@@ -418,10 +389,7 @@ class LSW3Context(CommonContext):
             if ap_received and not is_unlocked:
                 self.game_memory.unlock_red_brick(brick_number)
 
-        # -------------------------------------------------------------
-        # Goal
-        # -------------------------------------------------------------
-
+        # IT'S JUST A SIMPLE NUMBERS GAME
         if (
              not self.goal_sent
              and all(
@@ -463,16 +431,14 @@ class LSW3Context(CommonContext):
             "locations": [location_id],
         }])
 
-    # =============================================================
-    # Archipelago packets
-    # =============================================================
-
+    # TALK to me, server
     def on_package(self, cmd, args):
         print(f"PACKET: {cmd}")
 
-        # ---------------------------------------------------------
-        # Connected
-        # ---------------------------------------------------------
+        import dolphin_memory_engine as dme
+        if dme.get_status() == dme.get_status().unHooked or not dme.is_hooked():
+            ConnectionResetError("Make sure dolphin is running.")
+
 
         if cmd == "Connected":
             self.randomized_red_bricks = set(
@@ -496,10 +462,6 @@ class LSW3Context(CommonContext):
                 f"{sorted(self.nonrandomized_red_bricks)}"
             )
 
-        # ---------------------------------------------------------
-        # Received Items
-        # ---------------------------------------------------------
-
         if cmd == "ReceivedItems":
             print(
                 f"Received {len(args['items'])} item(s)"
@@ -508,13 +470,6 @@ class LSW3Context(CommonContext):
             for item in args["items"]:
                 print(f"Item ID: {item.item}")
 
-                # Character receipt needs to send an async
-                # LocationChecks packet for the hub-character
-                # special case.
-                #
-                # handle_received_item() itself remains synchronous
-                # because on_package() is a synchronous CommonClient
-                # callback.
                 asyncio.create_task(
                     self.handle_received_item(item)
                 )
@@ -528,10 +483,6 @@ class LSW3Context(CommonContext):
                 "Dolphin is not connected."
             )
             return
-
-        # ---------------------------------------------------------
-        # Filler Studs
-        # ---------------------------------------------------------
 
         STUD_VALUES = {
             ITEM_STUDS_10: 10,
@@ -555,11 +506,12 @@ class LSW3Context(CommonContext):
             self.wallet_level += 1
 
             wallet_caps = [
-                10000,       # no wallet
-                100000,      # wallet 1
-                1000000,     # wallet 2
-                10000000,    # wallet 3
-                100000000,
+                10_000,        # no wallet
+                100_000,       # wallet 1
+                1_000_000,     # wallet 2
+                10_000_000,    # wallet 3
+                100_000_000,   # wallet 4,I *think* there's something taht requires more? Maybe?
+                999999999999999999999999999999999999999 ## UNLIMITED STUD WALLETTTTTT
             ]
 
             self.wallet_cap = wallet_caps[
