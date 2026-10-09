@@ -1,6 +1,7 @@
 from BaseClasses import Item
 
 from .Characters import CHARACTERS
+from .Ships import SHIPS
 
 GAME_NAME = "LEGO Star Wars III: The Clone Wars"
 
@@ -31,7 +32,11 @@ CHARACTER_ITEM_IDS = {
     name: BASE_ID + 0x0100 + index
     for index, name in enumerate(CHARACTERS)
 }
-
+# Characters
+SHIP_ITEM_IDS = {
+    name: BASE_ID + 0x0300 + index
+    for index, name in enumerate(SHIPS)
+}
 
 class LSW3Item(Item):
     game = GAME_NAME

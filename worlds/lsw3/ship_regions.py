@@ -1,0 +1,33 @@
+republic_ships = {
+	"Anakin's Jedi Starfighter",
+	"Obi-Wan's Jedi Starfighter",
+	"Plo Koon's Jedi Starfighter",
+	"Kit Fisto's Jedi Starfighter",
+	"Y-Wing Starfighter",
+	"ARC-170 Starfighter (Rapid Fire)",
+	"Republic Gunship",
+	"Republic Dropship (Rapid Fire)",
+	"Republic Attack Shuttle",
+	"Jedi Shuttle",
+	"Medical Frigate (Torpedoes)",
+	"Republic Cruiser (Missiles + Torpedoes)",
+	"The Twilight",
+	"V-19 Torrent Starfighter",
+	"H-Type Nubian Yacht",
+	"Stealth Ship (Missiles + Torpedoes)"
+}
+
+separatist_ships = {
+	"Vulture Droid",
+	"Hyena Bomber",
+	"Geonosian Starfighter",
+	"Neimoidian Shuttle",
+	"Pirate Saucer (Missiles)",
+	"MagnaGuard Starfighter",
+	"Geonosian Solar Sailor",
+	"Soulless One (Rapid Fire)",
+	"Xanadu Blood (Rapid Fire)",
+	"The Halo (Rapid Fire)",
+	"Trident Assault Craft (Missiles + Torpedoes)",
+	"Slave I"
+}

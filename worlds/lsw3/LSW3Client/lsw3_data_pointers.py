@@ -145,3 +145,33 @@ CHARACTERS = [
     ('Tee Watt Kaa', 0x81045385),
 ]
 
+SHIPS = [
+    ("Anakin's Jedi Starfighter", 0x81045399),
+    ("Obi-Wan's Jedi Starfighter", 0x81045416),
+    ("Plo Koon's Jedi Starfighter", 0x8104539B),
+    ("Kit Fisto's Jedi Starfighter", 0x8104539C),
+    ("Y-Wing Starfighter", 0x810453AA),
+    ("ARC-170 Starfighter (Rapid Fire)", 0x81045413),
+    ("Republic Gunship", 0x810453B8),
+    ("Republic Dropship (Rapid Fire)", 0x810453BB),
+    ("Republic Attack Shuttle", 0x810453A8),
+    ("Jedi Shuttle", 0x810453D1),
+    ("Medical Frigate (Torpedoes)", 0x810453B4),
+    ("Republic Cruiser (Missiles + Torpedoes)", 0x810453BC),
+    ("The Twilight", 0x81045397),
+    ("V-19 Torrent Starfighter", 0x810453D4),
+    ("H-Type Nubian Yacht", 0x810453AF),
+    ("Stealth Ship (Missiles + Torpedoes)", 0x81045412),
+    ("Vulture Droid", 0x81045391),
+    ("Hyena Bomber", 0x81045411),
+    ("Geonosian Starfighter", 0x81045407),
+    ("Neimoidian Shuttle", 0x810453D0),
+    ("Pirate Saucer (Missiles)", 0x81045405),
+    ("MagnaGuard Starfighter", 0x8104540D),
+    ("Geonosian Solar Sailor", 0x810453BE),
+    ("Soulless One (Rapid Fire)", 0x810453A9),
+    ("Xanadu Blood (Rapid Fire)", 0x81045414),
+    ("The Halo (Rapid Fire)", 0x8104541A),
+    ("Trident Assult Craft (Missiles + Torpedoes)", 0x81045419),
+    ("Slave I", 0x8104540C)
+]

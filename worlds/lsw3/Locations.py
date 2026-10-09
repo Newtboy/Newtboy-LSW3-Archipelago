@@ -1,5 +1,6 @@
 from BaseClasses import Location
 from .Characters import CHARACTERS as ch
+from LSW3Client.lsw3_data_pointers import SHIPS as Ships
 
 GAME_NAME = "LEGO Star Wars III: The Clone Wars"
 
@@ -13,6 +14,11 @@ RED_BRICK_LOCATION_IDS = {
 CHARACTER_LOCATION_IDS = {
     f"Character Unlock: {item}": 2000 + i
     for i, item in enumerate(ch, start=1)
+}
+
+SHIP_LOCATION_IDS = {
+    f"Ship Unlock: {item}": 3000 + i
+    for i, item in enumerate(Ships, start=1)
 }
 
 studCheckLevels = [

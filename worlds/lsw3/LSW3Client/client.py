@@ -1,5 +1,6 @@
 import warnings
 
+import worlds.lsw3
 from worlds.lsw3.LSW3Client import lsw3_data_pointers
 
 from tkinter import messagebox
@@ -141,6 +142,8 @@ class LSW3Context(CommonContext):
 
         self.character_state = {}
 
+        self.ship_state = {}
+
         self.goal_sent = False
         
     async def check_stud_locations(self):
@@ -213,6 +216,14 @@ class LSW3Context(CommonContext):
                     }
                     for character in self.game_memory.CHARACTERS
                 }
+                self.ship_state = {
+                    ship: {
+                        "ap_received": False,
+                        "bought": False,
+                        "location_checked": False,
+                    }
+                    for ship in self.game_memory.SHIPS
+                }
 
                 asyncio.create_task(self.game_watcher())
 
@@ -231,6 +242,7 @@ class LSW3Context(CommonContext):
             await self.check_connection()
             await self.check_red_bricks()
             await self.check_characters()
+            await self.check_ships()
             if self.haveWallets:
                 await self.check_studs()
             await self.check_stud_locations()
@@ -249,7 +261,7 @@ class LSW3Context(CommonContext):
         chars = [
             13,  # N
             26,  # 0
-            2,  # C
+            2,   # C
             20,  # U
             19,  # T
             31,  # 5
@@ -311,9 +323,6 @@ class LSW3Context(CommonContext):
         """
         Report a naturally obtained character as an AP location.
         """
-
-        print(f"Detected physical unlock of {character}")
-
         location_name = f"Character Unlock: {character}"
         location_id = CHARACTER_LOCATION_IDS[location_name]
 
@@ -321,6 +330,86 @@ class LSW3Context(CommonContext):
             "cmd": "LocationChecks",
             "locations": [location_id],
         }])
+
+    async def check_ships(self):
+        """go through lsw ships and ensure they're in the right state"""
+
+        for ship in self.game_memory.SHIPS:
+            state = self.ship_state[ship]
+
+            ap_received = state["ap_received"]
+            bought = state["bought"]
+            location_checked = state["location_checked"]
+
+            is_unlocked = self.game_memory.character_unlocked(ship)
+
+            if is_unlocked and not ap_received:
+                state["bought"] = True
+                bought = True
+
+            if ap_received:
+                if not is_unlocked:
+                    self.game_memory.unlock_character(ship)
+
+            elif bought:
+                if not location_checked:
+                    await self.character_collected(ship)
+                    state["location_checked"] = True
+
+                self.game_memory.lock_character(ship)
+
+    async def ship_collected(self, ship):
+        """
+        Report a naturally obtained character as an AP location.
+        """
+        location_name = f"Ship Unlock: {ship}"
+        location_id = worlds.lsw3.SHIP_LOCATION_IDS[location_name]
+
+        await self.send_msgs([{
+            "cmd": "LocationChecks",
+            "locations": [location_id],
+        }])
+
+
+    async def receive_ship(self, ship):
+        """
+        get da ship TM
+        """
+        if ship not in self.ship_state:
+            print(
+                f"WARNING: Received unknown character "
+                f"{ship}"
+            )
+            return
+
+        state = self.ship_state[ship]
+
+        state["ap_received"] = True
+
+        # Give the character immediately.
+        self.game_memory.unlock_ship(ship)
+
+        print(
+            f"Received character from Archipelago: "
+            f"{ship}"
+        )
+
+        if (
+                (ship in self.hub_characters
+                 or ship in self.minikit_characters
+                 or ship in self.brig_characters)
+                and not state["bought"]
+                and not state["location_checked"]
+        ):
+            print(
+                f"{ship} is a hub character. "
+                f"Checking its associated location."
+            )
+
+            await self.character_collected(ship)
+
+            state["location_checked"] = True
+
 
     async def receive_character(self, character):
         """
@@ -432,7 +521,7 @@ class LSW3Context(CommonContext):
         }])
 
     # TALK to me, server
-    def on_package(self, cmd, args):
+    def on_package(self, cmd:str, args:dict[str, str]):
         print(f"PACKET: {cmd}")
 
         import dolphin_memory_engine as dme
@@ -510,19 +599,13 @@ class LSW3Context(CommonContext):
                 100_000,       # wallet 1
                 1_000_000,     # wallet 2
                 10_000_000,    # wallet 3
-                100_000_000,   # wallet 4,I *think* there's something taht requires more? Maybe?
+                100_000_000,   # wallet 4,I *think* there's something that requires more? Maybe?
                 999999999999999999999999999999999999999 ## UNLIMITED STUD WALLETTTTTT
             ]
 
             self.wallet_cap = wallet_caps[
                 min(self.wallet_level, len(wallet_caps) - 1)
             ]
-
-            print(
-                f"Received Progressive Wallet! "
-                f"Wallet level: {self.wallet_level}, "
-                f"cap: {self.wallet_cap:,}"
-            )
 
             return
         # ---------------------------------------------------------
@@ -568,6 +651,12 @@ class LSW3Context(CommonContext):
         for name, item_id in CHARACTER_ITEM_IDS.items():
             if item.item == item_id:
                 await self.receive_character(name)
+                return
+            # }
+
+        for name, item_id in worlds.lsw3.SHIP_ITEM_IDS.items(): # {
+            if (item.item == item_id): # {
+                await self.receive_ship(name)
                 return
 
         print(

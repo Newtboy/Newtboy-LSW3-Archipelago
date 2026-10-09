@@ -19,6 +19,7 @@ class LSW3Memory:
     CHEAT_CODE_CURSOR_INDEX = ld.CHEAT_CODE_CURSOR_INDEX
 
     CHARACTERS = dict(ld.CHARACTERS)
+    SHIPS = dict(ld.SHIPS)
 
     def __init__(self):
         dme.hook()

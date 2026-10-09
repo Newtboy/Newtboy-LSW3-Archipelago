@@ -35,7 +35,10 @@ class RandomizeGroundBattleCharacters(Toggle):
 class RandomizeBrigCharacters(Toggle):
     """Randomize Brig Characters"""
     display_name = "Randomize Brig Characters?"
-    
+
+class RandomizeShips(Toggle):
+    """Randomize Ships"""
+    display_name = "Randomize Ships?"
     
 @dataclass
 class LSW3Options(PerGameCommonOptions):
@@ -45,3 +48,4 @@ class LSW3Options(PerGameCommonOptions):
     use_minikit_characters: RandomizeMinikitCharacters
     use_groundBattle_characters: RandomizeGroundBattleCharacters
     use_brig_characters: RandomizeBrigCharacters
+    randomize_ships :RandomizeShips
