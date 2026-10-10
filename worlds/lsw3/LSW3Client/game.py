@@ -151,6 +151,27 @@ class LSW3Memory:
     def lock_character(self, name):
         """Same as described"""
         self.set_character(name, 0)
+
+    def get_ship(self, name):
+        return self.read_u8(self.SHIPS[name])
+
+    def set_ship(self, name, value):
+        self.write_u8(self.SHIPS[name], value)
+
+    def ship_unlocked(self, name):
+        """You know I guess I don't like writing docstrings"""
+        return self.get_ship(name) != 0
+
+    def unlock_ship(self, name):
+        """Same"""
+        if name not in self.SHIPS:
+            raise KeyError(f"Unknown character: {name}")
+
+        self.set_ship(name, 1)
+
+    def lock_ship(self, name):
+        """Same as described"""
+        self.set_ship(name, 0)
         
     def reset_managed_state(self):
         """Set all to 0"""
@@ -169,6 +190,9 @@ class LSW3Memory:
         # Characters
         for name in self.CHARACTERS:
             self.lock_character(name)
+
+        for name in self.SHIPS: # {
+            self.lock_ship(name)
 
     def unlock_red_brick(self, brick_number):
         """Does as described"""

@@ -307,16 +307,16 @@ class LSW3World(World):
                     menu,
                 )
             )
-
-        for name, location_id in SHIP_LOCATION_IDS.items():
-            menu.locations.append(
-                LSW3Location(
-                    self.player,
-                    name,
-                    location_id,
-                    menu,
+        if (self.options.randomize_ships): # {
+            for name, location_id in SHIP_LOCATION_IDS.items():
+                menu.locations.append(
+                    LSW3Location(
+                        self.player,
+                        name,
+                        location_id,
+                        menu,
+                    )
                 )
-            )
 
     def create_items(self):
         red_brick_count = self.options.red_brick_count.value
@@ -386,7 +386,7 @@ class LSW3World(World):
         
         # Randomized Ships
         if (self.options.randomize_ships): # {
-            for ship in SHIP_LOCATION_IDS:
+            for ship in SHIP_ITEM_IDS:
                 self.multiworld.itempool.append(
                     self.create_item(ship)
                 )
@@ -414,6 +414,8 @@ class LSW3World(World):
         # Three wallet locations/items if wallets aren't enabled.
         if not self.options.progressive_wallets.value:
             remaining += 5
+        if (not self.options.randomize_ships): # {
+            remaining += len(SHIP_ITEM_IDS)
 
         for _ in range(remaining):
             self.multiworld.itempool.append(

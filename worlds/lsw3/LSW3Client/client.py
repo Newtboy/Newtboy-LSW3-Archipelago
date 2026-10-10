@@ -46,7 +46,8 @@ from worlds.lsw3.Items import (
 from worlds.lsw3.Locations import (
     RED_BRICK_LOCATION_IDS,
     CHARACTER_LOCATION_IDS,
-    STUD_LOCATION_IDS
+    STUD_LOCATION_IDS,
+    SHIP_LOCATION_IDS
 )
 
 from .lsw3_data_pointers import CHEAT_CODE_CHARACTERS as chs
@@ -341,7 +342,7 @@ class LSW3Context(CommonContext):
             bought = state["bought"]
             location_checked = state["location_checked"]
 
-            is_unlocked = self.game_memory.character_unlocked(ship)
+            is_unlocked = self.game_memory.ship_unlocked(ship)
 
             if is_unlocked and not ap_received:
                 state["bought"] = True
@@ -349,14 +350,14 @@ class LSW3Context(CommonContext):
 
             if ap_received:
                 if not is_unlocked:
-                    self.game_memory.unlock_character(ship)
+                    self.game_memory.unlock_ship(ship)
 
             elif bought:
                 if not location_checked:
-                    await self.character_collected(ship)
+                    await self.ship_collected(ship)
                     state["location_checked"] = True
 
-                self.game_memory.lock_character(ship)
+                self.game_memory.lock_ship(ship)
 
     async def ship_collected(self, ship):
         """
