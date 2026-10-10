@@ -77,48 +77,10 @@ class LSW3Context(CommonContext):
         self.stud_locations_checked = set()
 
 
-        self.hub_characters = {
-            "Cad Bane",
-            "Count Dooku",
-            "Admiral Yularen",
-            "Jango Fett",
-            "R4-P17",
-            "Neimoidian",
-            "Battle Droid",
-            "Super Battle Droid",
-            "Gonk Droid",
-            "LEP Servant Droid",
-            "Gold Super Battle Droid",
-            "Droideka",
-            "Captain Typho",
-            "Queen Neeyutnee",
-            "Battle Droid Commander",
-            "Hondo Ohnaka",
-            "Pirate Ruffian",
-            "Senator Kharrus",
-            "Tee Watt Kaa",
-            "Turk Falso",
-            "Probe Droid",
-            "Lurmen Villager",
-            "TX-20",
-            "Geonosian Guard",
-            "Workout Clone Trooper",
-            "Bib Fortuna",
-            "Undead Geonosian",
-            "Heavy Super Battle Droid",
-            "R6-H5",
-            "Clone Pilot",
-            "MSE-6",
-            "Sionver Boll",
-            "Bail Organa",
-            "Luxury Droid",
-            "Onaconda Farr",
-            "Senator Philo",
-            "Senate Commando (Captain)",
-            "Senate Commando",
-            "Gamorrean Guard",
-            "General Grievous",
-        }
+        self.hub_characters = hub_characters
+        self.minikit_characters = minikit_characters
+        self.brig_characters = brig_characters
+        self.ground_battle_characters = ground_battle_characters
 
         # NOTE:
         # "Destroyer Droid" is listed as "Droideka" instead
@@ -344,6 +306,15 @@ class LSW3Context(CommonContext):
 
             is_unlocked = self.game_memory.ship_unlocked(ship)
 
+            if ship == "Obi-Wan's Jedi Starfighter":
+                print(
+                    f"[SHIP DEBUG] {ship}: "
+                    f"unlocked={is_unlocked}, "
+                    f"ap_received={ap_received}, "
+                    f"bought={bought}, "
+                    f"location_checked={location_checked}"
+                )
+
             if is_unlocked and not ap_received:
                 state["bought"] = True
                 bought = True
@@ -397,7 +368,7 @@ class LSW3Context(CommonContext):
 
         if (not state["bought"] and not state["location_checked"]):
             print(
-                f"{ship} is gonna be a problem."
+                f"{ship} is gonna be a problem.\n"
                 f"Checking its associated location."
             )
 
