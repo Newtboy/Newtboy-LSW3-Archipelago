@@ -172,6 +172,6 @@ SHIPS = [
     ("Soulless One (Rapid Fire)", 0x810453A9),
     ("Xanadu Blood (Rapid Fire)", 0x81045414),
     ("The Halo (Rapid Fire)", 0x8104541A),
-    ("Trident Assult Craft (Missiles + Torpedoes)", 0x81045419),
+    ("Trident Assault Craft (Missiles + Torpedoes)", 0x81045419),
     ("Slave I", 0x8104540C)
 ]

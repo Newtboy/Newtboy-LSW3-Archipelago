@@ -317,6 +317,10 @@ class LSW3World(World):
                         menu,
                     )
                 )
+            # }
+        # }
+    # }
+
 
     def create_items(self):
         red_brick_count = self.options.red_brick_count.value
@@ -414,6 +418,7 @@ class LSW3World(World):
         # Three wallet locations/items if wallets aren't enabled.
         if not self.options.progressive_wallets.value:
             remaining += 5
+
         if (not self.options.randomize_ships.value): # {
             remaining += len(SHIP_ITEM_IDS)
 

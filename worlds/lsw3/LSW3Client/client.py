@@ -332,7 +332,7 @@ class LSW3Context(CommonContext):
 
     async def ship_collected(self, ship):
         """
-        Report a naturally obtained character as an AP location.
+        Report a naturally obtained ship as an AP location.
         """
         location_name = f"Ship Unlock: {ship}"
         location_id = worlds.lsw3.SHIP_LOCATION_IDS[location_name]
