@@ -32,8 +32,8 @@ from .character_regions import (
 )
 
 from .ship_regions import (
-    separatist_ships,
-    republic_ships
+    separatist_ships.value,
+    republic_ships.value
 )
 
 ########################################## Launcher Code ###################################################
@@ -307,7 +307,7 @@ class LSW3World(World):
                     menu,
                 )
             )
-        if (self.options.randomize_ships): # {
+        if (self.options.randomize_ships.value): # {
             for name, location_id in SHIP_LOCATION_IDS.items():
                 menu.locations.append(
                     LSW3Location(
@@ -385,7 +385,7 @@ class LSW3World(World):
             )
         
         # Randomized Ships
-        if (self.options.randomize_ships): # {
+        if (self.options.randomize_ships.value): # {
             for ship in SHIP_ITEM_IDS:
                 self.multiworld.itempool.append(
                     self.create_item(ship)
@@ -414,7 +414,7 @@ class LSW3World(World):
         # Three wallet locations/items if wallets aren't enabled.
         if not self.options.progressive_wallets.value:
             remaining += 5
-        if (not self.options.randomize_ships): # {
+        if (not self.options.randomize_ships.value): # {
             remaining += len(SHIP_ITEM_IDS)
 
         for _ in range(remaining):

@@ -395,15 +395,9 @@ class LSW3Context(CommonContext):
             f"{ship}"
         )
 
-        if (
-                (ship in self.hub_characters
-                 or ship in self.minikit_characters
-                 or ship in self.brig_characters)
-                and not state["bought"]
-                and not state["location_checked"]
-        ):
+        if (not state["bought"] and not state["location_checked"]):
             print(
-                f"{ship} is a hub character. "
+                f"{ship} is gonna be a problem."
                 f"Checking its associated location."
             )
 
