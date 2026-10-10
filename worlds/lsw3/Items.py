@@ -32,9 +32,9 @@ CHARACTER_ITEM_IDS = {
     name: BASE_ID + 0x0100 + index
     for index, name in enumerate(CHARACTERS)
 }
-# Characters
+# Ships
 SHIP_ITEM_IDS = {
-    name: BASE_ID + 0x0300 + index
+    name: BASE_ID + 0x0500 + index
     for index, name in enumerate(SHIPS)
 }
 

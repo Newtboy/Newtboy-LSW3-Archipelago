@@ -1,6 +1,6 @@
 from BaseClasses import Location
 from .Characters import CHARACTERS as ch
-from LSW3Client.lsw3_data_pointers import SHIPS as Ships
+from .Ships import SHIPS as Ships
 
 GAME_NAME = "LEGO Star Wars III: The Clone Wars"
 

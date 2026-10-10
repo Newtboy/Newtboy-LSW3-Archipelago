@@ -384,11 +384,12 @@ class LSW3World(World):
                 self.create_item(name)
             )
         
-        
-        for name in self.randomized_ships:
-            self.multiworld.itempool.append(
-                self.create_item(name)
-            )
+        # Randomized Ships
+        if (self.options.randomize_ships): # {
+            for ship in SHIP_LOCATION_IDS:
+                self.multiworld.itempool.append(
+                    self.create_item(ship)
+                )
 
         # Filler
         filler_items = [
