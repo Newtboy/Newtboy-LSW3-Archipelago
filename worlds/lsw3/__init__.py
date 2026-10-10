@@ -32,8 +32,8 @@ from .character_regions import (
 )
 
 from .ship_regions import (
-    separatist_ships.value,
-    republic_ships.value
+    separatist_ships,
+    republic_ships
 )
 
 ########################################## Launcher Code ###################################################

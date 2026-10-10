@@ -401,7 +401,7 @@ class LSW3Context(CommonContext):
                 f"Checking its associated location."
             )
 
-            await self.character_collected(ship)
+            await self.ship_collected(ship)
 
             state["location_checked"] = True
 
