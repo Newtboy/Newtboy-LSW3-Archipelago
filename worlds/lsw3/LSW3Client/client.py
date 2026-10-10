@@ -306,15 +306,6 @@ class LSW3Context(CommonContext):
 
             is_unlocked = self.game_memory.ship_unlocked(ship)
 
-            if ship == "Obi-Wan's Jedi Starfighter":
-                print(
-                    f"[SHIP DEBUG] {ship}: "
-                    f"unlocked={is_unlocked}, "
-                    f"ap_received={ap_received}, "
-                    f"bought={bought}, "
-                    f"location_checked={location_checked}"
-                )
-
             if is_unlocked and not ap_received:
                 state["bought"] = True
                 bought = True
@@ -332,7 +323,7 @@ class LSW3Context(CommonContext):
 
     async def ship_collected(self, ship):
         """
-        Report a naturally obtained character as an AP location.
+        Report a naturally obtained ship as an AP location.
         """
         location_name = f"Ship Unlock: {ship}"
         location_id = worlds.lsw3.SHIP_LOCATION_IDS[location_name]

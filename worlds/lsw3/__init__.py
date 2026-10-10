@@ -296,9 +296,18 @@ class LSW3World(World):
                     menu,
                 )
             )
-            
+
+        USED_CHAR_LOC_ID = dict()
+        for name, lID in CHARACTER_ITEM_IDS.items(): # {
+            if (self.options.use_brig_characters.value and name in brig_characters): # {
+                USED_CHAR_LOC_ID[name] = lID
+            if (self.options.use_groundBattle_characters.value and name in ground_battle_characters): # {
+                USED_CHAR_LOC_ID[name] = lID
+            if (self.options.use_minikit_characters.value and name in minikit_characters): # {
+                USED_CHAR_LOC_ID[name] = lID
+
         # Character locations.
-        for name, location_id in CHARACTER_LOCATION_IDS.items():
+        for name, location_id in USED_CHAR_LOC_ID.items():
             menu.locations.append(
                 LSW3Location(
                     self.player,
@@ -307,6 +316,7 @@ class LSW3World(World):
                     menu,
                 )
             )
+
         if (self.options.randomize_ships.value): # {
             for name, location_id in SHIP_LOCATION_IDS.items():
                 menu.locations.append(
@@ -317,6 +327,10 @@ class LSW3World(World):
                         menu,
                     )
                 )
+            # }
+        # }
+    # }
+
 
     def create_items(self):
         red_brick_count = self.options.red_brick_count.value
@@ -414,6 +428,7 @@ class LSW3World(World):
         # Three wallet locations/items if wallets aren't enabled.
         if not self.options.progressive_wallets.value:
             remaining += 5
+
         if (not self.options.randomize_ships.value): # {
             remaining += len(SHIP_ITEM_IDS)
 
