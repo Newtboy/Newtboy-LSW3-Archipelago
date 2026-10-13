@@ -59,6 +59,7 @@ from ..character_regions import (
     ground_battle_characters
 )
 
+debug = True
 
 class LSW3Context(CommonContext):
     game = "LEGO Star Wars III: The Clone Wars"
@@ -478,13 +479,14 @@ class LSW3Context(CommonContext):
         }])
 
     # TALK to me, server
-    def on_package(self, cmd:str, args:dict[str, str]):
-        print(f"PACKET: {cmd}")
+    def on_package(self, cmd: str, args: dict[str, str]):
+        if debug:
+            print(f"PACKET: {cmd}")
+            print(f"PACKET DATA: {args!r}")
 
         import dolphin_memory_engine as dme
         if dme.get_status() == dme.get_status().unHooked or not dme.is_hooked():
             ConnectionResetError("Make sure dolphin is running.")
-
 
         if cmd == "Connected":
             self.randomized_red_bricks = set(
@@ -494,27 +496,30 @@ class LSW3Context(CommonContext):
             self.haveWallets = args["slot_data"]["haveWallets"]
 
             self.nonrandomized_red_bricks = (
-                set(range(1, 19))
-                - self.randomized_red_bricks
+                    set(range(1, 19))
+                    - self.randomized_red_bricks
             )
 
-            print(
-                f"Randomized red bricks: "
-                f"{sorted(self.randomized_red_bricks)}"
-            )
-
-            print(
-                f"Non-randomized red bricks: "
-                f"{sorted(self.nonrandomized_red_bricks)}"
-            )
+            if debug:
+                print(
+                    f"Randomized red bricks: "
+                    f"{sorted(self.randomized_red_bricks)}"
+                )
+                print(
+                    f"Non-randomized red bricks: "
+                    f"{sorted(self.nonrandomized_red_bricks)}"
+                )
 
         if cmd == "ReceivedItems":
-            print(
-                f"Received {len(args['items'])} item(s)"
-            )
+            if debug:
+                print(f"Received {len(args['items'])} item(s)")
 
             for item in args["items"]:
-                print(f"Item ID: {item.item}")
+                if debug:
+                    print(f"Item object: {item!r}")
+                    print(f"Item ID: {item.item}")
+                    print(f"Location ID: {item.location}")
+                    print(f"Player ID: {item.player}")
 
                 asyncio.create_task(
                     self.handle_received_item(item)
@@ -523,6 +528,10 @@ class LSW3Context(CommonContext):
         super().on_package(cmd, args)
 
     async def handle_received_item(self, item):
+        if debug:
+            print(f"[ITEM DEBUG] Processing item ID {item.item}")
+            print(f"[ITEM DEBUG] Full item object: {item!r}")
+
         if self.game_memory is None:
             print(
                 "Cannot handle item: "
@@ -539,36 +548,35 @@ class LSW3Context(CommonContext):
 
         if item.item in STUD_VALUES:
             amount = STUD_VALUES[item.item]
-
             self.game_memory.studs += amount
 
-            print(
-                f"Received {amount:,} Studs!"
-            )
-
+            print(f"Received {amount:,} Studs!")
             return
-        
+
         if item.item == ITEM_PROGRESSIVE_WALLET:
             self.wallet_level += 1
 
             wallet_caps = [
-                10_000,        # no wallet
-                100_000,       # wallet 1
-                1_000_000,     # wallet 2
-                10_000_000,    # wallet 3
-                100_000_000,   # wallet 4,I *think* there's something that requires more? Maybe?
-                999999999999999999999999999999999999999 ## UNLIMITED STUD WALLETTTTTT
+                10_000,
+                100_000,
+                1_000_000,
+                10_000_000,
+                100_000_000,
+                999999999999999999999999999999999999999,
             ]
 
             self.wallet_cap = wallet_caps[
                 min(self.wallet_level, len(wallet_caps) - 1)
             ]
 
+            if debug:
+                print(
+                    f"[WALLET DEBUG] Level: {self.wallet_level}, "
+                    f"cap: {self.wallet_cap}"
+                )
             return
-        # ---------------------------------------------------------
-        # Gold Brick
-        # ---------------------------------------------------------
 
+        # Gold Brick
         if item.item == ITEM_GOLD_BRICK:
             self.actual_golds += 1
 
@@ -579,17 +587,18 @@ class LSW3Context(CommonContext):
                 f"Received Gold Brick! "
                 f"AP gold total: {self.actual_golds}"
             )
-
             return
 
-        # ---------------------------------------------------------
         # Red Bricks
-        # ---------------------------------------------------------
-
         for name, item_id in RED_BRICK_ITEM_IDS.items():
+            if debug:
+                print(
+                    f"[RED BRICK DEBUG] Comparing {item.item} "
+                    f"against {name} ({item_id})"
+                )
+
             if item.item == item_id:
                 brick_number = int(name.split()[-1])
-
                 state = self.red_brick_state[brick_number]
 
                 state["ap_received"] = True
@@ -598,27 +607,51 @@ class LSW3Context(CommonContext):
                 self.game_memory.unlock_red_brick(brick_number)
 
                 print(f"Archipelago gave {name}.")
-                
                 return
 
-        # ---------------------------------------------------------
         # Characters
-        # ---------------------------------------------------------
+        if debug:
+            print("[CHARACTER DEBUG] Checking character item IDs...")
 
         for name, item_id in CHARACTER_ITEM_IDS.items():
-            if item.item == item_id:
-                await self.receive_character(name)
-                return
-            # }
+            if debug:
+                print(
+                    f"[CHARACTER DEBUG] Comparing {item.item} "
+                    f"against {name} ({item_id})"
+                )
 
-        for name, item_id in worlds.lsw3.SHIP_ITEM_IDS.items(): # {
-            if (item.item == item_id): # {
+            if item.item == item_id:
+                if debug:
+                    print(
+                        f"[CHARACTER DEBUG] MATCH: {name}. "
+                        f"Calling receive_character()."
+                    )
+
+                await self.receive_character(name)
+
+                if debug:
+                    print(
+                        f"[CHARACTER DEBUG] receive_character() "
+                        f"completed for {name}."
+                    )
+                return
+
+        # Ships
+        for name, item_id in worlds.lsw3.SHIP_ITEM_IDS.items():
+            if debug:
+                print(
+                    f"[SHIP DEBUG] Comparing {item.item} "
+                    f"against {name} ({item_id})"
+                )
+
+            if item.item == item_id:
+                if debug:
+                    print(f"[SHIP DEBUG] MATCH: {name}")
+
                 await self.receive_ship(name)
                 return
 
-        print(
-            f"Unknown LSW3 item ID: {item.item}"
-        )
+        print(f"Unknown LSW3 item ID: {item.item}")
 
 
 # =================================================================

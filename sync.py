@@ -4,7 +4,7 @@ import shutil
 
 DEV_FOLDER = Path(r"C:\Users\whirl\Desktop\LSW3-Archipelago-Git")
 ARCHI_FOLDER = Path(
-    r"C:\Users\whirl\Desktop\LSW3 Archi\Archipelago Source\Archipelago-0.6.7"
+    r"C:\Users\whirl\Desktop\LSW3 Archi\Archipelago Source\Archipelago-0.6.8"
 )
 
 
@@ -15,6 +15,12 @@ def sync_folder(source, destination):
 
         # Don't copy Git's files.
         if ".git" in source_file.parts:
+            continue
+        
+        if ".idea" in source_file.parts:
+            continue
+        
+        if ".venv" in source_file.parts:
             continue
 
         relative_path = source_file.relative_to(source)

@@ -1,6 +1,7 @@
 from BaseClasses import Region, ItemClassification
 from worlds.AutoWorld import World
 
+import worlds.lsw3.character_regions
 from .options import LSW3Options
 
 from .Items import (
@@ -220,6 +221,8 @@ class LSW3World(World):
     options_dataclass = LSW3Options
     options: LSW3Options
 
+    numProgWallets = 5
+
     item_name_to_id = {
         "Gold Brick": ITEM_GOLD_BRICK,
 
@@ -297,25 +300,20 @@ class LSW3World(World):
                 )
             )
 
-        USED_CHAR_LOC_ID = dict()
-        for name, lID in CHARACTER_ITEM_IDS.items(): # {
-            if (self.options.use_brig_characters.value and name in brig_characters): # {
-                USED_CHAR_LOC_ID[name] = lID
-            if (self.options.use_groundBattle_characters.value and name in ground_battle_characters): # {
-                USED_CHAR_LOC_ID[name] = lID
-            if (self.options.use_minikit_characters.value and name in minikit_characters): # {
-                USED_CHAR_LOC_ID[name] = lID
+        used_characters = self.get_used_characters()
 
-        # Character locations.
-        for name, location_id in USED_CHAR_LOC_ID.items():
-            menu.locations.append(
-                LSW3Location(
-                    self.player,
-                    name,
-                    location_id,
-                    menu,
+        for location_name, location_id in CHARACTER_LOCATION_IDS.items():
+            character_name = location_name.removeprefix("Character Unlock: ")
+
+            if character_name in used_characters:
+                menu.locations.append(
+                    LSW3Location(
+                        self.player,
+                        location_name,
+                        location_id,
+                        menu,
+                    )
                 )
-            )
 
         if (self.options.randomize_ships.value): # {
             for name, location_id in SHIP_LOCATION_IDS.items():
@@ -329,6 +327,12 @@ class LSW3World(World):
                 )
             # }
         # }
+        print(f"DEBUG: Character locations defined: {len(CHARACTER_LOCATION_IDS)}")
+        print(f"DEBUG: Characters selected for locations: {len(used_characters)}")
+        print(f"DEBUG: Character locations actually created: "
+              f"{sum(location.name in used_characters for location in menu.locations)}")
+        print(f"DEBUG: Missing character locations: "
+              f"{sorted(used_characters - CHARACTER_LOCATION_IDS.keys())}")
     # }
 
 
@@ -341,47 +345,26 @@ class LSW3World(World):
             red_brick_count,
         )
 
-        # Characters
+        # Characters eligible for randomization.
+        eligible_characters = self.get_used_characters()
 
-        # Characters forced into the randomized pool by toggles.
-        forced_characters = set()
-
-        if self.options.use_minikit_characters.value:
-            forced_characters.update(minikit_characters)
-
-        if self.options.use_groundBattle_characters.value:
-            forced_characters.update(ground_battle_characters)
-
-        if self.options.use_brig_characters.value:
-            forced_characters.update(brig_characters)
-
-        # The percentage only applies to characters that aren't
-        # already being forced into the randomized pool.
-        randomizable_characters = (
-            set(CHARACTER_ITEM_IDS.keys()) - forced_characters
-        )
-
+        # Randomize the configured percentage of eligible characters.
         character_count = round(
-            len(randomizable_characters)
+            len(eligible_characters)
             * self.options.character_percent.value
             / 100
         )
 
         self.randomized_characters = self.random.sample(
-            list(randomizable_characters),
+            list(eligible_characters),
             character_count,
         )
 
-        # Add the forced characters.
-        self.randomized_characters.extend(forced_characters)
-
-        # This is the ACTUAL number of randomized character locations.
         randomized_character_count = len(self.randomized_characters)
-
 
         # Progressive Wallets
         if self.options.progressive_wallets.value:
-            for _ in range(3):
+            for _ in range(self.numProgWallets):
                 self.multiworld.itempool.append(
                     self.create_item("Progressive Wallet")
                 )
@@ -421,13 +404,13 @@ class LSW3World(World):
 
         # Non-randomized character locations.
         remaining += (
-                len(CHARACTER_LOCATION_IDS)
+                len(self.get_used_characters())
                 - randomized_character_count
         )
 
         # Three wallet locations/items if wallets aren't enabled.
         if not self.options.progressive_wallets.value:
-            remaining += 5
+            remaining += self.numProgWallets
 
         if (not self.options.randomize_ships.value): # {
             remaining += len(SHIP_ITEM_IDS)
@@ -438,6 +421,27 @@ class LSW3World(World):
                     self.random.choice(filler_items)
                 )
             )
+        print(f"DEBUG: Character items defined: {len(CHARACTER_ITEM_IDS)}")
+        print(f"DEBUG: Characters selected for randomization: "
+              f"{len(self.randomized_characters)}")
+        print(f"DEBUG: Missing character items: "
+              f"{sorted(set(self.randomized_characters) - CHARACTER_ITEM_IDS.keys())}")
+
+    def get_used_characters(self):
+        used_characters = set()
+
+        used_characters.update(worlds.lsw3.character_regions.hub_characters)
+
+        if self.options.use_brig_characters.value:
+            used_characters.update(brig_characters)
+
+        if self.options.use_groundBattle_characters.value:
+            used_characters.update(ground_battle_characters)
+
+        if self.options.use_minikit_characters.value:
+            used_characters.update(minikit_characters)
+
+        return used_characters
 
     def create_item(self, name):
         return LSW3Item(
