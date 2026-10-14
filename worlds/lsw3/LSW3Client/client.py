@@ -61,7 +61,8 @@ from ..character_regions import (
 	hub_characters,
 	brig_characters,
 	minikit_characters,
-	ground_battle_characters
+	ground_battle_characters,
+	level_unlock_characters
 )
 
 
@@ -313,7 +314,7 @@ class LSW3Context(CommonContext):
 	async def check_characters(self):
 		"""Check character locations and apply AP unlocks."""
 
-		location_gated_characters = (
+		location_buyable_characters = (
 				self.hub_characters
 				| self.minikit_characters
 				| self.brig_characters
@@ -323,34 +324,49 @@ class LSW3Context(CommonContext):
 			state = self.character_state[character]
 			is_unlocked = self.game_memory.character_unlocked(character)
 
-			# Detect that the player has naturally obtained the character.
-			# This must happen even if the AP item arrived first.
-			if is_unlocked:
-				state["bought"] = True
-
-			if character in location_gated_characters:
-				# Natural acquisition triggers the location check.
-				if state["bought"] and not state["location_checked"]:
-					# Remove the game's natural unlock while we wait for AP.
+			if character in level_unlock_characters:
+				# Natural level completion unlocks the character.
+				if is_unlocked and not state["location_checked"]:
 					self.game_memory.lock_character(character)
 
 					await self.character_collected(character)
 					state["location_checked"] = True
 
-					# We just locked it, so refresh our local understanding.
 					is_unlocked = False
 
-				# Both conditions must be met before unlocking.
+				# Both conditions are required.
 				if state["ap_received"] and state["location_checked"]:
 					if not self.game_memory.character_unlocked(character):
 						self.game_memory.unlock_character(character)
 
 				elif is_unlocked:
-					# The game must not bypass Archipelago.
+					self.game_memory.lock_character(character)
+
+			elif character in location_buyable_characters:
+				# Natural acquisition triggers the location check.
+				if is_unlocked:
+					state["bought"] = True
+
+				if state["bought"] and not state["location_checked"]:
+					self.game_memory.lock_character(character)
+
+					await self.character_collected(character)
+					state["location_checked"] = True
+
+					is_unlocked = False
+
+				if state["ap_received"] and state["location_checked"]:
+					if not self.game_memory.character_unlocked(character):
+						self.game_memory.unlock_character(character)
+
+				elif is_unlocked:
 					self.game_memory.lock_character(character)
 
 			else:
 				# Preserve the existing behavior for other characters.
+				if is_unlocked:
+					state["bought"] = True
+
 				if state["ap_received"]:
 					if not is_unlocked:
 						self.game_memory.unlock_character(character)
