@@ -248,11 +248,7 @@ class LSW3Memory:
 
 		self.write_u8(flags_address, flags)
 
-		# Keep the pause-menu count synchronized.
-		self.write_u8(
-			count_address,
-			flags.bit_count()
-		)
+
 
 		return True
 
@@ -309,25 +305,38 @@ class LSW3Memory:
 
 		return True
 
-	def lock_red_brick_count(self, brick_number):
-		"""Remove this brick from the game's displayed collected count."""
+	def red_brick_purchased(self, brick_number):
+		"""Check whether the brick has been purchased in the hub."""
 		if not 1 <= brick_number <= 18:
 			raise ValueError("Red brick number must be between 1 and 18")
 
 		if brick_number <= 8:
 			address = self.RED_BRICK_1_8_COUNT
-
+			bit = 1 << (brick_number - 1)
 		elif brick_number <= 16:
 			address = self.RED_BRICK_9_16_COUNT
-
+			bit = 1 << (brick_number - 9)
 		else:
 			address = self.RED_BRICK_17_18_COUNT
+			bit = 1 << (brick_number - 17)
+
+		return bool(self.read_u8(address) & bit)
+
+	def lock_red_brick_count(self, brick_number):
+		"""Clear the purchased flag so the brick can appear in the hub."""
+		if not 1 <= brick_number <= 18:
+			raise ValueError("Red brick number must be between 1 and 18")
+
+		if brick_number <= 8:
+			address = self.RED_BRICK_1_8_COUNT
+			bit = 1 << (brick_number - 1)
+		elif brick_number <= 16:
+			address = self.RED_BRICK_9_16_COUNT
+			bit = 1 << (brick_number - 9)
+		else:
+			address = self.RED_BRICK_17_18_COUNT
+			bit = 1 << (brick_number - 17)
 
 		current = self.read_u8(address)
-
-		if current == 0:
-			return False
-
-		self.write_u8(address, current - 1)
-
+		self.write_u8(address, current & ~bit)
 		return True

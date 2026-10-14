@@ -26,6 +26,9 @@ def sync_folder(source, destination):
         if ".venv" in source_file.parts:
             continue
 
+        if ("sync.py" in source_file.parts): # {
+            continue
+
         relative_path = source_file.relative_to(source)
         destination_file = destination / relative_path
 

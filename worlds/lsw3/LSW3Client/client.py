@@ -483,27 +483,26 @@ class LSW3Context(CommonContext):
 
 			ap_received = state["ap_received"]
 			location_checked = state["location_checked"]
-			is_unlocked = self.game_memory.red_brick_unlocked(brick_number)
 
-			if is_unlocked and not ap_received:
-				state["collected"] = True
+			purchased = self.game_memory.red_brick_purchased(
+				brick_number
+			)
 
-			if (
-					state["collected"]
-					and not ap_received
-					and not location_checked
-			):
+			# A natural hub purchase triggers the location check.
+			if purchased and not location_checked and not ap_received:
 				await self.red_brick_collected(brick_number)
-
 				state["location_checked"] = True
 
-				# Remove the physical collection from the game.
+			# AP owns the unlock flag, not the purchase flag.
+			if ap_received:
+				if not self.game_memory.red_brick_unlocked(brick_number):
+					self.game_memory.unlock_red_brick(brick_number)
+
+			# Prevent natural unlocks from bypassing AP.
+			elif self.game_memory.red_brick_unlocked(brick_number):
 				self.game_memory.lock_red_brick_unlock_flag(brick_number)
 
-			if ap_received and not is_unlocked:
-				self.game_memory.unlock_red_brick(brick_number)
-
-		# IT'S JUST A SIMPLE NUMBERS GAME
+		# Goal check
 		if (
 				not self.goal_sent
 				and all(
@@ -511,12 +510,10 @@ class LSW3Context(CommonContext):
 			for brick_number in self.randomized_red_bricks
 		)
 		):
-
 			await self.send_msgs([{
 				"cmd": "StatusUpdate",
 				"status": 30,
 			}])
-
 			self.goal_sent = True
 
 	async def red_brick_collected(self, brick_number):
