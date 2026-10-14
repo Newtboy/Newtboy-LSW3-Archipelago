@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+# pyrefly: ignore [missing-import]
 from Options import Range, PerGameCommonOptions, Toggle
 
 class RedBrickCount(Range):

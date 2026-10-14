@@ -240,23 +240,38 @@ class LSW3Context(CommonContext):
 
 	async def check_levels(self):
 		for level_name in self.game_memory.LEVELS:
+			location_name = f"Level Completed: {level_name}"
+
+			# Some levels intentionally have no AP location.
+			if location_name not in worlds.lsw3.LEVEL_LOCATION_IDS:
+				continue
+
 			state = self.level_state[level_name]
 			is_unlocked = self.game_memory.level_unlocked(level_name)
 
-			# DO NOT let the game unlock it, send the check
-			if is_unlocked and not state["ap_received"]:
+			# The game naturally unlocked this level.
+			if is_unlocked and not state["location_checked"]:
+				# Prevent the game from bypassing Archipelago.
 				self.game_memory.lock_level(level_name)
 
-				location_name = f"Level Completed: {level_name}"
+				state["location_checked"] = True
+
 				location_id = worlds.lsw3.LEVEL_LOCATION_IDS[location_name]
 				await self.send_msgs([{
 					"cmd": "LocationChecks",
 					"locations": [location_id],
 				}])
 
-			if state["ap_received"]:
-				if not is_unlocked:
+				is_unlocked = False
+
+			# Unlock only after both the item and location are obtained.
+			if state["ap_received"] and state["location_checked"]:
+				if not self.game_memory.level_unlocked(level_name):
 					self.game_memory.complete_level(level_name)
+
+			elif is_unlocked:
+				# If the game tries to unlock it again, keep it locked.
+				self.game_memory.lock_level(level_name)
 
 
 	async def check_cheat_code(self):
@@ -288,32 +303,56 @@ class LSW3Context(CommonContext):
 
 	# Characters
 	async def check_characters(self):
-		"""go through lsw characters and ensure they're in the right state"""
+		"""Check character locations and apply AP unlocks."""
+
+		location_gated_characters = (
+				self.hub_characters
+				| self.minikit_characters
+				| self.brig_characters
+		)
 
 		for character in self.game_memory.CHARACTERS:
 			state = self.character_state[character]
-
-			ap_received = state["ap_received"]
-			bought = state["bought"]
-			location_checked = state["location_checked"]
-
 			is_unlocked = self.game_memory.character_unlocked(character)
 
-			if is_unlocked and not ap_received:
+			# Detect that the player has naturally obtained the character.
+			# This must happen even if the AP item arrived first.
+			if is_unlocked:
 				state["bought"] = True
-				bought = True
 
-			if ap_received:
-				if not is_unlocked:
-					self.game_memory.unlock_character(character)
+			if character in location_gated_characters:
+				# Natural acquisition triggers the location check.
+				if state["bought"] and not state["location_checked"]:
+					# Remove the game's natural unlock while we wait for AP.
+					self.game_memory.lock_character(character)
 
-
-			elif bought:
-				if not location_checked:
 					await self.character_collected(character)
 					state["location_checked"] = True
 
-				self.game_memory.lock_character(character)
+					# We just locked it, so refresh our local understanding.
+					is_unlocked = False
+
+				# Both conditions must be met before unlocking.
+				if state["ap_received"] and state["location_checked"]:
+					if not self.game_memory.character_unlocked(character):
+						self.game_memory.unlock_character(character)
+
+				elif is_unlocked:
+					# The game must not bypass Archipelago.
+					self.game_memory.lock_character(character)
+
+			else:
+				# Preserve the existing behavior for other characters.
+				if state["ap_received"]:
+					if not is_unlocked:
+						self.game_memory.unlock_character(character)
+
+				elif state["bought"]:
+					if not state["location_checked"]:
+						await self.character_collected(character)
+						state["location_checked"] = True
+
+					self.game_memory.lock_character(character)
 
 	async def character_collected(self, character):
 		"""
@@ -400,46 +439,18 @@ class LSW3Context(CommonContext):
 
 			state["location_checked"] = True
 
-
 	async def receive_character(self, character):
-		"""
-		Give a character to the player from Archipelago.
-		"""
+		"""Record a character received from Archipelago."""
 
 		if character not in self.character_state:
-			print(
-				f"WARNING: Received unknown character "
-				f"{character}"
-			)
+			print(f"WARNING: Received unknown character {character}")
 			return
 
 		state = self.character_state[character]
-
 		state["ap_received"] = True
 
-		# Give the character immediately.
-		self.game_memory.unlock_character(character)
+		print(f"Received character from Archipelago: {character}")
 
-		print(
-			f"Received character from Archipelago: "
-			f"{character}"
-		)
-
-		if (
-				(character in self.hub_characters
-				 or character in self.minikit_characters
-				 or character in self.brig_characters)
-				and not state["bought"]
-				and not state["location_checked"]
-		):
-			print(
-				f"{character} is a hub character. "
-				f"Checking its associated location."
-			)
-
-			await self.character_collected(character)
-
-			state["location_checked"] = True
 
 	# Red Brick Stuff
 	async def check_red_bricks(self):
@@ -572,6 +583,7 @@ class LSW3Context(CommonContext):
 			]
 			return
 		# }
+
 		progressive_level_prefixes = {
 			ITEM_PROGRESSIVE_VENTRESS: "V",
 			ITEM_PROGRESSIVE_DOOKU: "D",
@@ -581,20 +593,26 @@ class LSW3Context(CommonContext):
 		prefix = progressive_level_prefixes.get(item.item)
 
 		if prefix is not None:
-			for name, level in (worlds.lsw3.LSW3Client.lsw3_data_pointers.LEVELS.items()):
-				# Find the next incomplete level in this character's sequence.
-				if name.startswith(prefix) and not level.isCompleted():
-					state = self.level_state[name]
-					self.game_memory.complete_level(name)
+			for name in self.game_memory.LEVELS:
+				state = self.level_state[name]
 
+				# An awarded level stays reserved even while it is locked.
+				# Do not use isCompleted() here: the level may intentionally
+				# remain locked until its location is checked.
+				if name.startswith(prefix) and not state["ap_received"]:
 					state["ap_received"] = True
 
-					print(f"Progressive level unlocked: {name}")
+					# If its location was already checked, unlock immediately.
+					# Otherwise, check_levels() will unlock it when that happens.
+					if state["location_checked"]:
+						self.game_memory.complete_level(name)
+					else:
+						self.game_memory.lock_level(name)
+
+					print(f"Received progressive level item for: {name}")
 					break
 			else:
-				print(
-					f"All levels in the {prefix} sequence are completed!"
-				)
+				print(f"All levels in the {prefix} sequence have been awarded!")
 
 			return
 

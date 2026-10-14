@@ -62,7 +62,7 @@ minikit_characters = {
 	"Darth Sidious (Classic)",
 	"Darth Vader (Classic)",
 	"Darth Vader Battle Damaged (Classic)",
-	"Vader’s Apprentice (Classic)",
+	"Vader's Apprentice (Classic)",
 	"Imperial Guard (Classic)",
 	"Clone Shadow Trooper (Classic)",
 	"Stormtrooper (Classic)",

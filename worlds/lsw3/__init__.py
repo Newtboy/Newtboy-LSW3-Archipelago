@@ -418,17 +418,31 @@ class LSW3World(World):
 					self.create_item(ship)
 				)
 
-		# Progressive levels
-		if (self.options.progressive_levels.value): # {
-			for i in range(0,5): # {
+		level_counts = {"D": 0, "V": 0, "G": 0}
+		unmatched_levels = []
+
+		for location_name in LEVEL_LOCATION_IDS:
+			level_name = location_name.removeprefix("Level Completed: ")
+
+			if len(level_name) >= 2 and level_name[0] in level_counts and level_name[1].isdigit():
+				level_counts[level_name[0]] += 1
+			else:
+				unmatched_levels.append(level_name)
+		# Progressive Levels
+		if self.options.progressive_levels.value:
+			for _ in range(level_counts["D"]):
 				self.multiworld.itempool.append(
-					self.create_item("Progressive Dooku Level")
+					self.create_item("Progressive Dooku")
 				)
+
+			for _ in range(level_counts["V"]):
 				self.multiworld.itempool.append(
-					self.create_item("Progressive Ventress Level")
+					self.create_item("Progressive Ventress")
 				)
+
+			for _ in range(level_counts["G"]):
 				self.multiworld.itempool.append(
-					self.create_item("Progressive Grievous Level")
+					self.create_item("Progressive Grievous")
 				)
 
 		# Filler
@@ -437,41 +451,36 @@ class LSW3World(World):
 			"100 Studs",
 			"1000 Studs",
 			"10000 Studs",
-			"Asthmatic Robot",
-			"Roger Roger",
-			"Jedi Scum!"
+			# "Asthmatic Robot",
+			# "Roger Roger",
+			# "Jedi Scum!"
 		]
 
-		# Non-randomized red brick locations.
-		remaining = (
-				len(RED_BRICK_LOCATION_IDS)
-				- red_brick_count
+		# Calculate the number of locations and items for this player.
+		location_count = sum(
+			1
+			for location in self.multiworld.get_locations()
+			if location.player == self.player
 		)
 
-		# Non-randomized character locations.
-		remaining += (
-				len(self.get_used_characters())
-				- randomized_character_count
+		item_count = sum(
+			1
+			for item in self.multiworld.itempool
+			if item.player == self.player
 		)
 
-		# Three wallet locations/items if wallets aren't enabled.
-		if not self.options.progressive_wallets.value:
-			remaining += self.numProgWallets
+		# Fill every remaining location with a filler item.
+		remaining = location_count - item_count
 
-		if (not self.options.randomize_ships.value): # {
-			remaining += len(SHIP_ITEM_IDS)
-		# }
-
-		# unlock 2-6, unlock zillo (one per path)
-		if (not self.options.progressive_levels.value): # {
-			remaining += 18
-		# }
+		if remaining < 0:
+			raise Exception(
+				f"LSW3 has {-remaining} too many items! "
+				f"Items: {item_count}, Locations: {location_count}"
+			)
 
 		for _ in range(remaining):
 			self.multiworld.itempool.append(
-				self.create_item(
-					self.random.choice(filler_items)
-				)
+				self.create_item(self.random.choice(filler_items))
 			)
 
 	def get_used_characters(self):
@@ -515,5 +524,6 @@ class LSW3World(World):
 			],
 			"randomizedShips": self.options.randomize_ships.value,
 			"haveWallets": self.options.progressive_wallets.value,
+			"progressiveLevels": self.options.progressive_levels.value,
 		}
         
