@@ -1,3 +1,4 @@
+import os.path
 from pathlib import Path
 import shutil
 
@@ -6,7 +7,9 @@ DEV_FOLDER = Path(r"C:\Users\whirl\Desktop\LSW3-Archipelago-Git")
 ARCHI_FOLDER = Path(
     r"C:\Users\whirl\Desktop\LSW3 Archi\Archipelago Source\Archipelago-0.6.8"
 )
-
+if (os.path.isdir(Path(r"C:\Users\GLaDOS_Backend_002\Desktop"))): # {
+    DEV_FOLDER = Path(r"C:\Users\GLaDOS_Backend_002\PycharmProjects\Newtboy-LSW3-Archipelago")
+    ARCHI_FOLDER = Path(r"C:\Users\GLaDOS_Backend_002\Desktop\Archi Dev\Archipelago-0.6.8")
 
 def sync_folder(source, destination):
     for source_file in source.rglob("*"):

@@ -64,7 +64,6 @@ from ..character_regions import (
 	ground_battle_characters
 )
 
-debug = True
 
 class LSW3Context(CommonContext):
 	game = "LEGO Star Wars III: The Clone Wars"
@@ -242,18 +241,28 @@ class LSW3Context(CommonContext):
 		for level_name in self.game_memory.LEVELS:
 			location_name = f"Level Completed: {level_name}"
 
-			# Some levels intentionally have no AP location.
 			if location_name not in worlds.lsw3.LEVEL_LOCATION_IDS:
 				continue
 
 			state = self.level_state[level_name]
 			is_unlocked = self.game_memory.level_unlocked(level_name)
 
-			# The game naturally unlocked this level.
-			if is_unlocked and not state["location_checked"]:
-				# Prevent the game from bypassing Archipelago.
-				self.game_memory.lock_level(level_name)
+			# Levels without progressive items only need their location checked.
+			if level_name in self.game_memory.NON_LOCKABLE_LEVELS:
+				if is_unlocked and not state["location_checked"]:
+					state["location_checked"] = True
 
+					location_id = worlds.lsw3.LEVEL_LOCATION_IDS[location_name]
+					await self.send_msgs([{
+						"cmd": "LocationChecks",
+						"locations": [location_id],
+					}])
+
+				continue
+
+			# Detect natural completion and report the location.
+			if is_unlocked and not state["location_checked"]:
+				self.game_memory.lock_level(level_name)
 				state["location_checked"] = True
 
 				location_id = worlds.lsw3.LEVEL_LOCATION_IDS[location_name]
@@ -264,13 +273,12 @@ class LSW3Context(CommonContext):
 
 				is_unlocked = False
 
-			# Unlock only after both the item and location are obtained.
+			# Progressive levels require both conditions.
 			if state["ap_received"] and state["location_checked"]:
 				if not self.game_memory.level_unlocked(level_name):
 					self.game_memory.complete_level(level_name)
 
 			elif is_unlocked:
-				# If the game tries to unlock it again, keep it locked.
 				self.game_memory.lock_level(level_name)
 
 
@@ -513,10 +521,6 @@ class LSW3Context(CommonContext):
 
 	# TALK to me, server
 	def on_package(self, cmd: str, args: dict[str, dict[str,str]]):
-		if debug:
-			print(f"PACKET: {cmd}")
-			print(f"PACKET DATA: {args!r}")
-
 		import dolphin_memory_engine as dme
 		if dme.get_status() == dme.get_status().unHooked or not dme.is_hooked():
 			ConnectionResetError("Make sure dolphin is running.")
@@ -534,9 +538,6 @@ class LSW3Context(CommonContext):
 			)
 
 		if cmd == "ReceivedItems":
-			if debug:
-				print(f"Received {len(args['items'])} item(s)")
-
 			for item in args["items"]:
 				asyncio.create_task(
 					self.handle_received_item(item)

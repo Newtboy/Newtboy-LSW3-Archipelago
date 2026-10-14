@@ -42,7 +42,7 @@ LEVEL_LOCATION_IDS = {
 	f"Level Completed: {name}": 5000 + i
 	for i, (name, level) in enumerate(LEVELS.items())
 	# if name != "D1" and name != "V1" and name != "G1" and name != "GA" and name != "ZB"
-	if name != "CD" and name != "HC" # exclude CD and HC bcz they awful
+	# if name != "CD" and name != "HC" # Genuinely what am I doing atp
 }
 
 

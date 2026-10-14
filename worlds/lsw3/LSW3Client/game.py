@@ -4,328 +4,330 @@ from . import lsw3_data_pointers as ld
 
 
 class LSW3Memory:
-    STUDS = ld.STUD_COUNT
-    GOLD_BRICKS = ld.GOLD_BRICK_COUNT
-
-    RED_BRICKS_1_8 = ld.RED_BRICKS_1_8
-    RED_BRICKS_9_16 = ld.RED_BRICKS_9_16
-    RED_BRICKS_17_18 = ld.RED_BRICKS_17_18
-
-    RED_BRICK_1_8_COUNT = ld.RED_BRICK_1_8_COUNT
-    RED_BRICK_9_16_COUNT = ld.RED_BRICK_9_16_COUNT
-    RED_BRICK_17_18_COUNT = ld.RED_BRICK_17_18_COUNT
-
-    CHEAT_CODE_CHARACTERS = ld.CHEAT_CODE_CHARACTERS
-    CHEAT_CODE_CURSOR_INDEX = ld.CHEAT_CODE_CURSOR_INDEX
-
-    CHARACTERS = dict(ld.CHARACTERS)
-    SHIPS = dict(ld.SHIPS)
-    LEVELS = ld.LEVELS
-
-    def __init__(self):
-        dme.hook()
-
-        if not dme.is_hooked():
-            raise RuntimeError("Could not hook Dolphin.")
-        else:
-            self.reset_managed_state()
-
-    def read_bytes(self, address, size):
-        return dme.read_bytes(address, size)
-
-    def write_bytes(self, address, data):
-        dme.write_bytes(address, data)
-
-    def read_u8(self, address):
-        return int.from_bytes(
-            self.read_bytes(address, 1),
-            byteorder="big",
-            signed=False
-        )
-
-    def write_u8(self, address, value):
-        if not 0 <= value <= 0xFF:
-            raise ValueError("u8 value out of range")
-
-        self.write_bytes(
-            address,
-            value.to_bytes(1, byteorder="big", signed=False)
-        )
-
-    def read_u64(self, address):
-        return int.from_bytes(
-            self.read_bytes(address, 8),
-            byteorder="big",
-            signed=False
-        )
-
-    def write_u64(self, address, value):
-        if not 0 <= value <= 0xFFFFFFFFFFFFFFFF:
-            raise ValueError("u64 value out of range")
-
-        self.write_bytes(
-            address,
-            value.to_bytes(8, byteorder="big", signed=False)
-        )
-
-    @property
-    def studs(self):
-        return self.read_u64(self.STUDS)
+	STUDS = ld.STUD_COUNT
+	GOLD_BRICKS = ld.GOLD_BRICK_COUNT
+
+	RED_BRICKS_1_8 = ld.RED_BRICKS_1_8
+	RED_BRICKS_9_16 = ld.RED_BRICKS_9_16
+	RED_BRICKS_17_18 = ld.RED_BRICKS_17_18
+
+	RED_BRICK_1_8_COUNT = ld.RED_BRICK_1_8_COUNT
+	RED_BRICK_9_16_COUNT = ld.RED_BRICK_9_16_COUNT
+	RED_BRICK_17_18_COUNT = ld.RED_BRICK_17_18_COUNT
+
+	CHEAT_CODE_CHARACTERS = ld.CHEAT_CODE_CHARACTERS
+	CHEAT_CODE_CURSOR_INDEX = ld.CHEAT_CODE_CURSOR_INDEX
+
+	CHARACTERS = dict(ld.CHARACTERS)
+	SHIPS = dict(ld.SHIPS)
+	LEVELS = ld.LEVELS
+	NON_LOCKABLE_LEVELS = ["GA", "HC", "CD", "ZB"]
+
+	def __init__(self):
+		dme.hook()
+
+		if not dme.is_hooked():
+			raise RuntimeError("Could not hook Dolphin.")
+		else:
+			self.reset_managed_state()
+
+	def read_bytes(self, address, size):
+		return dme.read_bytes(address, size)
+
+	def write_bytes(self, address, data):
+		dme.write_bytes(address, data)
+
+	def read_u8(self, address):
+		return int.from_bytes(
+			self.read_bytes(address, 1),
+			byteorder="big",
+			signed=False
+		)
+
+	def write_u8(self, address, value):
+		if not 0 <= value <= 0xFF:
+			raise ValueError("u8 value out of range")
+
+		self.write_bytes(
+			address,
+			value.to_bytes(1, byteorder="big", signed=False)
+		)
+
+	def read_u64(self, address):
+		return int.from_bytes(
+			self.read_bytes(address, 8),
+			byteorder="big",
+			signed=False
+		)
+
+	def write_u64(self, address, value):
+		if not 0 <= value <= 0xFFFFFFFFFFFFFFFF:
+			raise ValueError("u64 value out of range")
+
+		self.write_bytes(
+			address,
+			value.to_bytes(8, byteorder="big", signed=False)
+		)
+
+	@property
+	def studs(self):
+		return self.read_u64(self.STUDS)
 
-    @studs.setter
-    def studs(self, value):
-        self.write_u64(self.STUDS, value)
+	@studs.setter
+	def studs(self, value):
+		self.write_u64(self.STUDS, value)
 
-    @property
-    def gold_bricks(self):
-        return self.read_u8(self.GOLD_BRICKS)
+	@property
+	def gold_bricks(self):
+		return self.read_u8(self.GOLD_BRICKS)
 
-    @gold_bricks.setter
-    def gold_bricks(self, value):
-        self.write_u8(self.GOLD_BRICKS, value)
+	@gold_bricks.setter
+	def gold_bricks(self, value):
+		self.write_u8(self.GOLD_BRICKS, value)
 
-    @property
-    def red_bricks_1_8(self):
-        return self.read_u8(self.RED_BRICKS_1_8)
+	@property
+	def red_bricks_1_8(self):
+		return self.read_u8(self.RED_BRICKS_1_8)
 
-    @red_bricks_1_8.setter
-    def red_bricks_1_8(self, value):
-        self.write_u8(self.RED_BRICKS_1_8, value)
+	@red_bricks_1_8.setter
+	def red_bricks_1_8(self, value):
+		self.write_u8(self.RED_BRICKS_1_8, value)
 
-    @property
-    def red_bricks_9_16(self):
-        return self.read_u8(self.RED_BRICKS_9_16)
-
-    @red_bricks_9_16.setter
-    def red_bricks_9_16(self, value):
-        self.write_u8(self.RED_BRICKS_9_16, value)
-
-    @property
-    def red_bricks_17_18(self):
-        return self.read_u8(self.RED_BRICKS_17_18)
-
-    @red_bricks_17_18.setter
-    def red_bricks_17_18(self, value):
-        self.write_u8(self.RED_BRICKS_17_18, value)
+	@property
+	def red_bricks_9_16(self):
+		return self.read_u8(self.RED_BRICKS_9_16)
 
-    @property
-    def red_brick_1_8_count(self):
-        return self.read_u8(self.RED_BRICK_1_8_COUNT)
+	@red_bricks_9_16.setter
+	def red_bricks_9_16(self, value):
+		self.write_u8(self.RED_BRICKS_9_16, value)
 
-    @red_brick_1_8_count.setter
-    def red_brick_1_8_count(self, value):
-        self.write_u8(self.RED_BRICK_1_8_COUNT, value)
+	@property
+	def red_bricks_17_18(self):
+		return self.read_u8(self.RED_BRICKS_17_18)
 
-    @property
-    def red_brick_9_16_count(self):
-        return self.read_u8(self.RED_BRICK_9_16_COUNT)
+	@red_bricks_17_18.setter
+	def red_bricks_17_18(self, value):
+		self.write_u8(self.RED_BRICKS_17_18, value)
 
-    @red_brick_9_16_count.setter
-    def red_brick_9_16_count(self, value):
-        self.write_u8(self.RED_BRICK_9_16_COUNT, value)
+	@property
+	def red_brick_1_8_count(self):
+		return self.read_u8(self.RED_BRICK_1_8_COUNT)
 
-    @property
-    def red_brick_17_18_count(self):
-        return self.read_u8(self.RED_BRICK_17_18_COUNT)
+	@red_brick_1_8_count.setter
+	def red_brick_1_8_count(self, value):
+		self.write_u8(self.RED_BRICK_1_8_COUNT, value)
 
-    @red_brick_17_18_count.setter
-    def red_brick_17_18_count(self, value):
-        self.write_u8(self.RED_BRICK_17_18_COUNT, value)
+	@property
+	def red_brick_9_16_count(self):
+		return self.read_u8(self.RED_BRICK_9_16_COUNT)
 
-    def get_character(self, name):
-        return self.read_u8(self.CHARACTERS[name])
-
-    def set_character(self, name, value):
-        self.write_u8(self.CHARACTERS[name], value)
-
-    def character_unlocked(self, name):
-        """You know I guess I don't like writing docstrings"""
-        return self.get_character(name) != 0
-
-    def unlock_character(self, name):
-        """Same"""
-        if name not in self.CHARACTERS:
-            raise KeyError(f"Unknown character: {name}")
+	@red_brick_9_16_count.setter
+	def red_brick_9_16_count(self, value):
+		self.write_u8(self.RED_BRICK_9_16_COUNT, value)
 
-        self.set_character(name, 1)
+	@property
+	def red_brick_17_18_count(self):
+		return self.read_u8(self.RED_BRICK_17_18_COUNT)
 
-    def lock_character(self, name):
-        """Same as described"""
-        self.set_character(name, 0)
+	@red_brick_17_18_count.setter
+	def red_brick_17_18_count(self, value):
+		self.write_u8(self.RED_BRICK_17_18_COUNT, value)
 
-    def get_ship(self, name):
-        return self.read_u8(self.SHIPS[name])
+	def get_character(self, name):
+		return self.read_u8(self.CHARACTERS[name])
 
-    def set_ship(self, name, value):
-        self.write_u8(self.SHIPS[name], value)
-
-    def ship_unlocked(self, name):
-        """You know I guess I don't like writing docstrings"""
-        return self.get_ship(name) != 0
-
-    def unlock_ship(self, name):
-        """Same"""
-        if name not in self.SHIPS:
-            raise KeyError(f"Unknown character: {name}")
-
-        self.set_ship(name, 1)
-
-    def lock_ship(self, name):
-        """Same as described"""
-        self.set_ship(name, 0x00)
-
-    def get_level(self, name):
-        return self.read_u8(self.LEVELS[name].unlockFlag)
-
-    def set_level(self, name, val):
-        self.write_u8(self.LEVELS[name].unlockFlag, val)
-
-    def level_unlocked(self, name):
-        return self.get_level(name) == 0x04
-
-    def complete_level(self, name):
-        if name not in self.LEVELS:
-            raise KeyError(f"Unknown level: {name}")
-        self.set_level(name, 0x04)
-
-    def lock_level(self, name):
-        self.set_level(name, 0x00)
-        
-    def reset_managed_state(self):
-        """Set all to 0"""
-        # Red Bricks
-        self.red_bricks_1_8 = 0
-        self.red_bricks_9_16 = 0
-        self.red_bricks_17_18 = 0
-
-        self.red_brick_1_8_count = 0
-        self.red_brick_9_16_count = 0
-        self.red_brick_17_18_count = 0
-
-        # Gold Bricks
-        self.gold_bricks = 0
-
-        # Characters
-        for name in self.CHARACTERS:
-            self.lock_character(name)
-
-        for name in self.SHIPS: # {
-            self.lock_ship(name)
-
-        for name in self.LEVELS: # {
-            self.lock_level(name)
-        # }
-
-    def unlock_red_brick(self, brick_number):
-        """Does as described"""
-        if not 1 <= brick_number <= 18:
-            raise ValueError("Red brick number must be between 1 and 18")
-
-        if brick_number <= 8:
-            flags_address = self.RED_BRICKS_1_8
-            count_address = self.RED_BRICK_1_8_COUNT
-            bit = 1 << (brick_number - 1)
-
-        elif brick_number <= 16:
-            flags_address = self.RED_BRICKS_9_16
-            count_address = self.RED_BRICK_9_16_COUNT
-            bit = 1 << (brick_number - 9)
+	def set_character(self, name, value):
+		self.write_u8(self.CHARACTERS[name], value)
 
-        else:
-            flags_address = self.RED_BRICKS_17_18
-            count_address = self.RED_BRICK_17_18_COUNT
-            bit = 1 << (brick_number - 17)
+	def character_unlocked(self, name):
+		"""You know I guess I don't like writing docstrings"""
+		return self.get_character(name) != 0
 
-        flags = self.read_u8(flags_address)
+	def unlock_character(self, name):
+		"""Same"""
+		if name not in self.CHARACTERS:
+			raise KeyError(f"Unknown character: {name}")
 
-        # Already unlocked.
-        if flags & bit:
-            return False
+		self.set_character(name, 1)
 
-        flags |= bit
+	def lock_character(self, name):
+		"""Same as described"""
+		self.set_character(name, 0)
 
-        self.write_u8(flags_address, flags)
+	def get_ship(self, name):
+		return self.read_u8(self.SHIPS[name])
 
-        # Keep the pause-menu count synchronized.
-        self.write_u8(
-            count_address,
-            flags.bit_count()
-        )
+	def set_ship(self, name, value):
+		self.write_u8(self.SHIPS[name], value)
 
-        return True
-    
-    def all_red_bricks_unlocked(self):
-        """Do we have all red bricks?"""
-        return all(
-            self.red_brick_unlocked(i)
-            for i in range(1, 19)
-        )
-        
-    def red_brick_unlocked(self, brick_number):
-        """Is the red brick unlocked?"""
-        if not 1 <= brick_number <= 18:
-            raise ValueError("Red brick number must be between 1 and 18")
+	def ship_unlocked(self, name):
+		"""You know I guess I don't like writing docstrings"""
+		return self.get_ship(name) != 0
 
-        if brick_number <= 8:
-            flags = self.red_bricks_1_8
-            bit = 1 << (brick_number - 1)
+	def unlock_ship(self, name):
+		"""Same"""
+		if name not in self.SHIPS:
+			raise KeyError(f"Unknown character: {name}")
 
-        elif brick_number <= 16:
-            flags = self.red_bricks_9_16
-            bit = 1 << (brick_number - 9)
+		self.set_ship(name, 1)
 
-        else:
-            flags = self.red_bricks_17_18
-            bit = 1 << (brick_number - 17)
+	def lock_ship(self, name):
+		"""Same as described"""
+		self.set_ship(name, 0x00)
 
-        return bool(flags & bit)
-            
+	def get_level(self, name):
+		return self.read_u8(self.LEVELS[name].unlockFlag)
 
-    def lock_red_brick_unlock_flag(self, brick_number):
-        """Clear the actual red-brick unlock flag."""
-        if not 1 <= brick_number <= 18:
-            raise ValueError("Red brick number must be between 1 and 18")
+	def set_level(self, name, val):
+		self.write_u8(self.LEVELS[name].unlockFlag, val)
 
-        if brick_number <= 8:
-            address = self.RED_BRICKS_1_8
-            bit = 1 << (brick_number - 1)
+	def level_unlocked(self, name):
+		return self.get_level(name) == 0x04
 
-        elif brick_number <= 16:
-            address = self.RED_BRICKS_9_16
-            bit = 1 << (brick_number - 9)
+	def complete_level(self, name):
+		if name not in self.LEVELS:
+			raise KeyError(f"Unknown level: {name}")
+		self.set_level(name, 0x04)
 
-        else:
-            address = self.RED_BRICKS_17_18
-            bit = 1 << (brick_number - 17)
+	def lock_level(self, name):
+		self.set_level(name, 0x00)
 
-        current = self.read_u8(address)
+	def reset_managed_state(self):
+		"""Set all to 0"""
+		# Red Bricks
+		self.red_bricks_1_8 = 0
+		self.red_bricks_9_16 = 0
+		self.red_bricks_17_18 = 0
 
-        if not current & bit:
-            return False
+		self.red_brick_1_8_count = 0
+		self.red_brick_9_16_count = 0
+		self.red_brick_17_18_count = 0
 
-        self.write_u8(address, current & ~bit)
+		# Gold Bricks
+		self.gold_bricks = 0
 
-        return True
-    
-    def lock_red_brick_count(self, brick_number):
-        """Remove this brick from the game's displayed collected count."""
-        if not 1 <= brick_number <= 18:
-            raise ValueError("Red brick number must be between 1 and 18")
+		# Characters
+		for name in self.CHARACTERS:
+			self.lock_character(name)
 
-        if brick_number <= 8:
-            address = self.RED_BRICK_1_8_COUNT
+		for name in self.SHIPS: # {
+			self.lock_ship(name)
 
-        elif brick_number <= 16:
-            address = self.RED_BRICK_9_16_COUNT
+		for name in self.LEVELS: # {
+			if (name not in self.NON_LOCKABLE_LEVELS): # {
+				self.lock_level(name)
+		# }
 
-        else:
-            address = self.RED_BRICK_17_18_COUNT
+	def unlock_red_brick(self, brick_number):
+		"""Does as described"""
+		if not 1 <= brick_number <= 18:
+			raise ValueError("Red brick number must be between 1 and 18")
 
-        current = self.read_u8(address)
+		if brick_number <= 8:
+			flags_address = self.RED_BRICKS_1_8
+			count_address = self.RED_BRICK_1_8_COUNT
+			bit = 1 << (brick_number - 1)
 
-        if current == 0:
-            return False
+		elif brick_number <= 16:
+			flags_address = self.RED_BRICKS_9_16
+			count_address = self.RED_BRICK_9_16_COUNT
+			bit = 1 << (brick_number - 9)
 
-        self.write_u8(address, current - 1)
+		else:
+			flags_address = self.RED_BRICKS_17_18
+			count_address = self.RED_BRICK_17_18_COUNT
+			bit = 1 << (brick_number - 17)
 
-        return True
+		flags = self.read_u8(flags_address)
+
+		# Already unlocked.
+		if flags & bit:
+			return False
+
+		flags |= bit
+
+		self.write_u8(flags_address, flags)
+
+		# Keep the pause-menu count synchronized.
+		self.write_u8(
+			count_address,
+			flags.bit_count()
+		)
+
+		return True
+
+	def all_red_bricks_unlocked(self):
+		"""Do we have all red bricks?"""
+		return all(
+			self.red_brick_unlocked(i)
+			for i in range(1, 19)
+		)
+
+	def red_brick_unlocked(self, brick_number):
+		"""Is the red brick unlocked?"""
+		if not 1 <= brick_number <= 18:
+			raise ValueError("Red brick number must be between 1 and 18")
+
+		if brick_number <= 8:
+			flags = self.red_bricks_1_8
+			bit = 1 << (brick_number - 1)
+
+		elif brick_number <= 16:
+			flags = self.red_bricks_9_16
+			bit = 1 << (brick_number - 9)
+
+		else:
+			flags = self.red_bricks_17_18
+			bit = 1 << (brick_number - 17)
+
+		return bool(flags & bit)
+
+
+	def lock_red_brick_unlock_flag(self, brick_number):
+		"""Clear the actual red-brick unlock flag."""
+		if not 1 <= brick_number <= 18:
+			raise ValueError("Red brick number must be between 1 and 18")
+
+		if brick_number <= 8:
+			address = self.RED_BRICKS_1_8
+			bit = 1 << (brick_number - 1)
+
+		elif brick_number <= 16:
+			address = self.RED_BRICKS_9_16
+			bit = 1 << (brick_number - 9)
+
+		else:
+			address = self.RED_BRICKS_17_18
+			bit = 1 << (brick_number - 17)
+
+		current = self.read_u8(address)
+
+		if not current & bit:
+			return False
+
+		self.write_u8(address, current & ~bit)
+
+		return True
+
+	def lock_red_brick_count(self, brick_number):
+		"""Remove this brick from the game's displayed collected count."""
+		if not 1 <= brick_number <= 18:
+			raise ValueError("Red brick number must be between 1 and 18")
+
+		if brick_number <= 8:
+			address = self.RED_BRICK_1_8_COUNT
+
+		elif brick_number <= 16:
+			address = self.RED_BRICK_9_16_COUNT
+
+		else:
+			address = self.RED_BRICK_17_18_COUNT
+
+		current = self.read_u8(address)
+
+		if current == 0:
+			return False
+
+		self.write_u8(address, current - 1)
+
+		return True
