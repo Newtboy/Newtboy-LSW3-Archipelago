@@ -20,6 +20,7 @@ class LSW3Memory:
 
     CHARACTERS = dict(ld.CHARACTERS)
     SHIPS = dict(ld.SHIPS)
+    LEVELS = ld.LEVELS
 
     def __init__(self):
         dme.hook()
@@ -171,7 +172,24 @@ class LSW3Memory:
 
     def lock_ship(self, name):
         """Same as described"""
-        self.set_ship(name, 0)
+        self.set_ship(name, 0x00)
+
+    def get_level(self, name):
+        return self.read_u8(self.LEVELS[name].unlockFlag)
+
+    def set_level(self, name, val):
+        self.write_u8(self.LEVELS[name].unlockFlag, val)
+
+    def level_unlocked(self, name):
+        return self.get_level(name) == 0x04
+
+    def complete_level(self, name):
+        if name not in self.LEVELS:
+            raise KeyError(f"Unknown level: {name}")
+        self.set_level(name, 0x04)
+
+    def lock_level(self, name):
+        self.set_level(name, 0x00)
         
     def reset_managed_state(self):
         """Set all to 0"""
@@ -193,6 +211,10 @@ class LSW3Memory:
 
         for name in self.SHIPS: # {
             self.lock_ship(name)
+
+        for name in self.LEVELS: # {
+            self.lock_level(name)
+        # }
 
     def unlock_red_brick(self, brick_number):
         """Does as described"""

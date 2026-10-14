@@ -1,44 +1,53 @@
+# pyrefly: ignore-errors [unknown-name]
+
+# pyrefly: ignore [missing-import]
 from BaseClasses import Region, ItemClassification
+# pyrefly: ignore [missing-import]
 from worlds.AutoWorld import World
 
 import worlds.lsw3.character_regions
 from .options import LSW3Options
 
 from .Items import (
-    LSW3Item,
-    GAME_NAME,
-    ITEM_GOLD_BRICK,
-    RED_BRICK_ITEM_IDS,
-    CHARACTER_ITEM_IDS,
-    ITEM_STUDS_10,
-    ITEM_STUDS_100,
-    ITEM_STUDS_1000,
-    ITEM_STUDS_10000,
-    ITEM_PROGRESSIVE_WALLET,
-    SHIP_ITEM_IDS,
+	LSW3Item,
+	GAME_NAME,
+	ITEM_GOLD_BRICK,
+	RED_BRICK_ITEM_IDS,
+	CHARACTER_ITEM_IDS,
+	ITEM_STUDS_10,
+	ITEM_STUDS_100,
+	ITEM_STUDS_1000,
+	ITEM_STUDS_10000,
+	ITEM_PROGRESSIVE_WALLET,
+	SHIP_ITEM_IDS,
+	ITEM_PROGRESSIVE_DOOKU,
+	ITEM_PROGRESSIVE_GRIEVOUS,
+	ITEM_PROGRESSIVE_VENTRESS
 )
 
 from .Locations import (
-    LSW3Location,
-    RED_BRICK_LOCATION_IDS,
-    CHARACTER_LOCATION_IDS,
-    STUD_LOCATION_IDS,
-    SHIP_LOCATION_IDS,
+	LSW3Location,
+	RED_BRICK_LOCATION_IDS,
+	CHARACTER_LOCATION_IDS,
+	STUD_LOCATION_IDS,
+	SHIP_LOCATION_IDS,
+	LEVEL_LOCATION_IDS
 )
 
 from .character_regions import (
-    minikit_characters,
-    brig_characters,
-    ground_battle_characters,
+	minikit_characters,
+	brig_characters,
+	ground_battle_characters,
 )
 
 from .ship_regions import (
-    separatist_ships,
-    republic_ships
+	separatist_ships,
+	republic_ships
 )
 
 ########################################## Launcher Code ###################################################
 
+# pyrefly: ignore [missing-import]
 from worlds.LauncherComponents import Component, components, Type, launch
 
 import json
@@ -53,420 +62,458 @@ CONFIG_FILE = CONFIG_DIR / "config.json"
 
 
 def run_client_launcher(*args: str):
-    asyncio.run(run_client(*args))
+	# pyrefly: ignore [bad-argument-type]
+	asyncio.run(run_client(*args))
 
 
 def show_message(title: str, message: str):
-    root = tk.Tk()
-    root.withdraw()
+	root = tk.Tk()
+	root.withdraw()
 
-    messagebox.showinfo(
-        title,
-        message,
-        parent=root,
-    )
+	messagebox.showinfo(
+		title,
+		message,
+		parent=root,
+	)
 
-    root.destroy()
+	root.destroy()
 
 
 def ask_dolphin_path():
-    root = tk.Tk()
-    root.withdraw()
+	root = tk.Tk()
+	root.withdraw()
 
-    path = filedialog.askopenfilename(
-        title="Select Dolphin Emulator",
-        filetypes=[
-            ("Dolphin Emulator", "Dolphin.exe"),
-            ("Executable files", "*.exe"),
-            ("All files", "*.*"),
-        ],
-        parent=root,
-    )
+	path = filedialog.askopenfilename(
+		title="Select Dolphin Emulator",
+		filetypes=[
+			("Dolphin Emulator", "Dolphin.exe"),
+			("Executable files", "*.exe"),
+			("All files", "*.*"),
+		],
+		parent=root,
+	)
 
-    root.destroy()
+	root.destroy()
 
-    return path
+	return path
 
 
 def get_dolphin_path():
-    if CONFIG_FILE.exists():
-        try:
-            with CONFIG_FILE.open("r", encoding="utf-8") as f:
-                config = json.load(f)
+	if CONFIG_FILE.exists():
+		try:
+			with CONFIG_FILE.open("r", encoding="utf-8") as f:
+				config = json.load(f)
 
-            path = Path(config.get("dolphin_path", ""))
+			path = Path(config.get("dolphin_path", ""))
 
-            if path.is_file():
-                return path
+			if path.is_file():
+				return path
 
-        except (OSError, json.JSONDecodeError):
-            pass
+		except (OSError, json.JSONDecodeError):
+			pass
 
-    path = ask_dolphin_path()
+	path = ask_dolphin_path()
 
-    if not path:
-        return None
+	if not path:
+		return None
 
-    path = Path(path)
+	path = Path(path)
 
-    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+	CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
-    with CONFIG_FILE.open("w", encoding="utf-8") as f:
-        json.dump(
-            {
-                "dolphin_path": str(path),
-            },
-            f,
-            indent=4,
-        )
+	with CONFIG_FILE.open("w", encoding="utf-8") as f:
+		json.dump(
+			{
+				"dolphin_path": str(path),
+			},
+			f,
+			indent=4,
+		)
 
-    return path
+	return path
 
 
 def show_step(message: str):
-    show_message(
-        "LEGO Star Wars III: The Clone Wars",
-        message,
-    )
+	show_message(
+		"LEGO Star Wars III: The Clone Wars",
+		message,
+	)
 
 
+# pyrefly: ignore [missing-source-for-stubs]
 import psutil
 
 
 def dolphin_is_running():
-    for process in psutil.process_iter(["name"]):
-        try:
-            if process.info["name"] and process.info["name"].lower() == "dolphin.exe":
-                return True
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
-            pass
+	for process in psutil.process_iter(["name"]):
+		try:
+			if process.info["name"] and process.info["name"].lower() == "dolphin.exe":
+				return True
+		except (psutil.NoSuchProcess, psutil.AccessDenied):
+			pass
 
-    return False
+	return False
 
 
 def run_client(*launcher_args):
-    parser = get_base_parser(
-        description="LEGO Star Wars III: The Clone Wars Archipelago Client."
-    )
+	# pyrefly: ignore [unknown-name]
+	parser = get_base_parser(
+		description="LEGO Star Wars III: The Clone Wars Archipelago Client."
+	)
 
-    args = parser.parse_args(launcher_args)
+	args = parser.parse_args(launcher_args)
 
-    async def _run():
-        ctx = LSW3Context(args.connect, args.password)
+	async def _run():
 
-        if gui_enabled:
-            ctx.run_gui()
 
-        await server_loop(ctx, args)
+		ctx = LSW3Context(args.connect, args.password)
 
-    asyncio.run(_run())
+		if gui_enabled:
+			ctx.run_gui()
+
+		await server_loop(ctx, args)
+
+	asyncio.run(_run())
 
 
 def main():
-    run_client()
+	run_client()
 
 
 if __name__ == "__main__":
-    main()
+	main()
 
 
 def launch_client(*args):
-    dolphin_path = get_dolphin_path()
+	dolphin_path = get_dolphin_path()
 
-    if dolphin_path is None:
-        return
+	if dolphin_path is None:
+		return
 
-    print(f"Launching Dolphin: {dolphin_path}")
+	print(f"Launching Dolphin: {dolphin_path}")
 
-    if not dolphin_is_running():
-        subprocess.Popen([str(dolphin_path)])
+	if not dolphin_is_running():
+		subprocess.Popen([str(dolphin_path)])
 
-    show_step(
-        "Open LEGO Star Wars III."
-    )
+	show_step(
+		"Open LEGO Star Wars III."
+	)
 
-    show_step(
-        "Load/Create a save file.\n\n"
-        "Do not start the game."
-    )
+	show_step(
+		"Load/Create a save file.\n\n"
+		"Do not start the game."
+	)
 
-    show_step(
-        "Launching client."
-    )
+	show_step(
+		"Launching client."
+	)
 
-    from .LSW3Client.client import run_client
+	from .LSW3Client.client import run_client
 
-    launch(
-        run_client,
-        name="LEGO Star Wars III: The Clone Wars Client",
-    )
+	launch(
+		run_client,
+		name="LEGO Star Wars III: The Clone Wars Client",
+	)
 
 
 components.append(
-    Component(
-        display_name="LEGO Star Wars III: The Clone Wars",
-        func=launch_client,
-        component_type=Type.CLIENT,
-        game_name="LEGO Star Wars III: The Clone Wars",
-        description="Archipelago client for LEGO Star Wars III: The Clone Wars.",
-    )
+	Component(
+		display_name="LEGO Star Wars III: The Clone Wars",
+		func=launch_client,
+		component_type=Type.CLIENT,
+		game_name="LEGO Star Wars III: The Clone Wars",
+		description="Archipelago client for LEGO Star Wars III: The Clone Wars.",
+	)
 )
 
 
 ########################################## Launcher World End ################################################
 
 class LSW3World(World):
-    game = GAME_NAME
-    
-    options_dataclass = LSW3Options
-    options: LSW3Options
+	game = GAME_NAME
 
-    numProgWallets = 5
+	options_dataclass = LSW3Options
+	options: LSW3Options
 
-    item_name_to_id = {
-        "Gold Brick": ITEM_GOLD_BRICK,
+	numProgWallets = 5
 
-        **RED_BRICK_ITEM_IDS,
-        **CHARACTER_ITEM_IDS,
-        **SHIP_ITEM_IDS,
+	item_name_to_id = {
+		"Gold Brick": ITEM_GOLD_BRICK,
 
-        "10 Studs": ITEM_STUDS_10,
-        "100 Studs": ITEM_STUDS_100,
-        "1000 Studs": ITEM_STUDS_1000,
-        "10000 Studs": ITEM_STUDS_10000,
+		**RED_BRICK_ITEM_IDS,
+		**CHARACTER_ITEM_IDS,
+		**SHIP_ITEM_IDS,
 
-        "Progressive Wallet": ITEM_PROGRESSIVE_WALLET,
-    }
+		"10 Studs": ITEM_STUDS_10,
+		"100 Studs": ITEM_STUDS_100,
+		"1000 Studs": ITEM_STUDS_1000,
+		"10000 Studs": ITEM_STUDS_10000,
 
-    item_name_to_classification = {
-        "Gold Brick": ItemClassification.useful,
+		"Progressive Wallet": ITEM_PROGRESSIVE_WALLET,
+		"Progressive Ventress": ITEM_PROGRESSIVE_VENTRESS,
+		"Progressive Grievous": ITEM_PROGRESSIVE_GRIEVOUS,
+		"Progressive Dooku": ITEM_PROGRESSIVE_DOOKU
+	}
 
-        "10 Studs": ItemClassification.filler,
-        "100 Studs": ItemClassification.filler,
-        "1000 Studs": ItemClassification.filler,
-        "10000 Studs": ItemClassification.filler,
+	item_name_to_classification = {
+		"Gold Brick": ItemClassification.useful,
 
-        **{
-            name: ItemClassification.progression
-            for name in RED_BRICK_ITEM_IDS
-        },
+		"10 Studs": ItemClassification.filler,
+		"100 Studs": ItemClassification.filler,
+		"1000 Studs": ItemClassification.filler,
+		"10000 Studs": ItemClassification.filler,
 
-        **{
-            name: ItemClassification.progression
-            for name in CHARACTER_ITEM_IDS
-        },
+		"Progressive Ventress": ItemClassification.progression,
+		"Progressive Grievous": ItemClassification.progression,
+		"Progressive Dooku": ItemClassification.progression,
 
-        **{
-            name: ItemClassification.progression
-            for name in SHIP_ITEM_IDS
-        },
-        
-        "Progressive Wallet": ItemClassification.progression,
-    }
+		**{
+			name: ItemClassification.progression
+			for name in RED_BRICK_ITEM_IDS
+		},
 
-    location_name_to_id = {
-        **RED_BRICK_LOCATION_IDS,
-        **CHARACTER_LOCATION_IDS,
-        **STUD_LOCATION_IDS,
-        **SHIP_LOCATION_IDS,
-    }
+		**{
+			name: ItemClassification.progression
+			for name in CHARACTER_ITEM_IDS
+		},
 
-    def create_regions(self):
-        menu = Region(
-            "Menu",
-            self.player,
-            self.multiworld,
-        )
+		**{
+			name: ItemClassification.progression
+			for name in SHIP_ITEM_IDS
+		},
 
-        self.multiworld.regions.append(menu)
+		"Progressive Wallet": ItemClassification.progression,
+	}
 
-        for name, location_id in RED_BRICK_LOCATION_IDS.items():
-            menu.locations.append(
-                LSW3Location(
-                    self.player,
-                    name,
-                    location_id,
-                    menu,
-                )
-            )
-            
-        for name, location_id in STUD_LOCATION_IDS.items():
-            menu.locations.append(
-                LSW3Location(
-                    self.player,
-                    name,
-                    location_id,
-                    menu,
-                )
-            )
+	location_name_to_id = {
+		**RED_BRICK_LOCATION_IDS,
+		**CHARACTER_LOCATION_IDS,
+		**STUD_LOCATION_IDS,
+		**SHIP_LOCATION_IDS,
+		**LEVEL_LOCATION_IDS,
+	}
 
-        used_characters = self.get_used_characters()
+	def create_regions(self):
+		menu = Region(
+			"Menu",
+			self.player,
+			self.multiworld,
+		)
 
-        for location_name, location_id in CHARACTER_LOCATION_IDS.items():
-            character_name = location_name.removeprefix("Character Unlock: ")
+		self.multiworld.regions.append(menu)
 
-            if character_name in used_characters:
-                menu.locations.append(
-                    LSW3Location(
-                        self.player,
-                        location_name,
-                        location_id,
-                        menu,
-                    )
-                )
+		for name, location_id in RED_BRICK_LOCATION_IDS.items():
+			menu.locations.append(
+				LSW3Location(
+					self.player,
+					name,
+					location_id,
+					menu,
+				)
+			)
 
-        if (self.options.randomize_ships.value): # {
-            for name, location_id in SHIP_LOCATION_IDS.items():
-                menu.locations.append(
-                    LSW3Location(
-                        self.player,
-                        name,
-                        location_id,
-                        menu,
-                    )
-                )
-            # }
-        # }
-        print(f"DEBUG: Character locations defined: {len(CHARACTER_LOCATION_IDS)}")
-        print(f"DEBUG: Characters selected for locations: {len(used_characters)}")
-        print(f"DEBUG: Character locations actually created: "
-              f"{sum(location.name in used_characters for location in menu.locations)}")
-        print(f"DEBUG: Missing character locations: "
-              f"{sorted(used_characters - CHARACTER_LOCATION_IDS.keys())}")
-    # }
+		for name, location_id in STUD_LOCATION_IDS.items():
+			menu.locations.append(
+				LSW3Location(
+					self.player,
+					name,
+					location_id,
+					menu,
+				)
+			)
+
+		if (self.options.progressive_levels.value): # {
+			for name, location_id in LEVEL_LOCATION_IDS.items(): # {
+				menu.locations.append(
+					LSW3Location(
+						self.player,
+						name,
+						location_id,
+						menu,
+					)
+				)
+			# }
+		# }
 
 
-    def create_items(self):
-        red_brick_count = self.options.red_brick_count.value
+		used_characters = self.get_used_characters()
 
-        # Red Bricks
-        self.randomized_red_bricks = self.random.sample(
-            list(RED_BRICK_ITEM_IDS.keys()),
-            red_brick_count,
-        )
+		for location_name, location_id in CHARACTER_LOCATION_IDS.items():
+			character_name = location_name.removeprefix("Character Unlock: ")
 
-        # Characters eligible for randomization.
-        eligible_characters = self.get_used_characters()
+			if character_name in used_characters:
+				menu.locations.append(
+					LSW3Location(
+						self.player,
+						location_name,
+						location_id,
+						menu,
+					)
+				)
 
-        # Randomize the configured percentage of eligible characters.
-        character_count = round(
-            len(eligible_characters)
-            * self.options.character_percent.value
-            / 100
-        )
+		if (self.options.randomize_ships.value): # {
+			for name, location_id in SHIP_LOCATION_IDS.items():
+				menu.locations.append(
+					LSW3Location(
+						self.player,
+						name,
+						location_id,
+						menu,
+					)
+				)
+			# }
+		# }
+	# }
 
-        self.randomized_characters = self.random.sample(
-            list(eligible_characters),
-            character_count,
-        )
 
-        randomized_character_count = len(self.randomized_characters)
+	def create_items(self):
+		red_brick_count = self.options.red_brick_count.value
 
-        # Progressive Wallets
-        if self.options.progressive_wallets.value:
-            for _ in range(self.numProgWallets):
-                self.multiworld.itempool.append(
-                    self.create_item("Progressive Wallet")
-                )
+		# Red Bricks
+		self.randomized_red_bricks = self.random.sample(
+			list(RED_BRICK_ITEM_IDS.keys()),
+			red_brick_count,
+		)
 
-        # Randomized Red Bricks
-        for name in self.randomized_red_bricks:
-            self.multiworld.itempool.append(
-                self.create_item(name)
-            )
+		# Characters eligible for randomization.
+		eligible_characters = self.get_used_characters()
 
-        # Randomized Characters
-        for name in self.randomized_characters:
-            self.multiworld.itempool.append(
-                self.create_item(name)
-            )
-        
-        # Randomized Ships
-        if (self.options.randomize_ships.value): # {
-            for ship in SHIP_ITEM_IDS:
-                self.multiworld.itempool.append(
-                    self.create_item(ship)
-                )
+		# Randomize the configured percentage of eligible characters.
+		character_count = round(
+			len(eligible_characters)
+			* self.options.character_percent.value
+			/ 100
+		)
 
-        # Filler
-        filler_items = [
-            "10 Studs",
-            "100 Studs",
-            "1000 Studs",
-            "10000 Studs",
-        ]
+		self.randomized_characters = self.random.sample(
+			list(eligible_characters),
+			character_count,
+		)
 
-        # Non-randomized red brick locations.
-        remaining = (
-                len(RED_BRICK_LOCATION_IDS)
-                - red_brick_count
-        )
+		randomized_character_count = len(self.randomized_characters)
 
-        # Non-randomized character locations.
-        remaining += (
-                len(self.get_used_characters())
-                - randomized_character_count
-        )
+		# Progressive Wallets
+		if self.options.progressive_wallets.value:
+			for _ in range(self.numProgWallets):
+				self.multiworld.itempool.append(
+					self.create_item("Progressive Wallet")
+				)
 
-        # Three wallet locations/items if wallets aren't enabled.
-        if not self.options.progressive_wallets.value:
-            remaining += self.numProgWallets
+		# Randomized Red Bricks
+		for name in self.randomized_red_bricks:
+			self.multiworld.itempool.append(
+				self.create_item(name)
+			)
 
-        if (not self.options.randomize_ships.value): # {
-            remaining += len(SHIP_ITEM_IDS)
+		# Randomized Characters
+		for name in self.randomized_characters:
+			self.multiworld.itempool.append(
+				self.create_item(name)
+			)
 
-        for _ in range(remaining):
-            self.multiworld.itempool.append(
-                self.create_item(
-                    self.random.choice(filler_items)
-                )
-            )
-        print(f"DEBUG: Character items defined: {len(CHARACTER_ITEM_IDS)}")
-        print(f"DEBUG: Characters selected for randomization: "
-              f"{len(self.randomized_characters)}")
-        print(f"DEBUG: Missing character items: "
-              f"{sorted(set(self.randomized_characters) - CHARACTER_ITEM_IDS.keys())}")
+		# Randomized Ships
+		if (self.options.randomize_ships.value): # {
+			for ship in SHIP_ITEM_IDS:
+				self.multiworld.itempool.append(
+					self.create_item(ship)
+				)
 
-    def get_used_characters(self):
-        used_characters = set()
+		# Progressive levels
+		if (self.options.progressive_levels.value): # {
+			for i in range(0,5): # {
+				self.multiworld.itempool.append(
+					self.create_item("Progressive Dooku Level")
+				)
+				self.multiworld.itempool.append(
+					self.create_item("Progressive Ventress Level")
+				)
+				self.multiworld.itempool.append(
+					self.create_item("Progressive Grievous Level")
+				)
 
-        used_characters.update(worlds.lsw3.character_regions.hub_characters)
+		# Filler
+		filler_items = [
+			"10 Studs",
+			"100 Studs",
+			"1000 Studs",
+			"10000 Studs",
+			"Asthmatic Robot",
+			"Roger Roger",
+			"Jedi Scum!"
+		]
 
-        if self.options.use_brig_characters.value:
-            used_characters.update(brig_characters)
+		# Non-randomized red brick locations.
+		remaining = (
+				len(RED_BRICK_LOCATION_IDS)
+				- red_brick_count
+		)
 
-        if self.options.use_groundBattle_characters.value:
-            used_characters.update(ground_battle_characters)
+		# Non-randomized character locations.
+		remaining += (
+				len(self.get_used_characters())
+				- randomized_character_count
+		)
 
-        if self.options.use_minikit_characters.value:
-            used_characters.update(minikit_characters)
+		# Three wallet locations/items if wallets aren't enabled.
+		if not self.options.progressive_wallets.value:
+			remaining += self.numProgWallets
 
-        return used_characters
+		if (not self.options.randomize_ships.value): # {
+			remaining += len(SHIP_ITEM_IDS)
+		# }
 
-    def create_item(self, name):
-        return LSW3Item(
-            name,
-            self.item_name_to_classification[name],
-            self.item_name_to_id[name],
-            self.player,
-        )
+		# unlock 2-6, unlock zillo (one per path)
+		if (not self.options.progressive_levels.value): # {
+			remaining += 18
+		# }
 
-    def set_rules(self):
-        self.multiworld.completion_condition[self.player] = lambda state: all(
-            state.has(name, self.player)
-            for name in self.randomized_red_bricks
-        )
-        
-    def generate_basic(self):
-        pass
-    
-    def fill_slot_data(self):
-        return {
-            "randomized_red_bricks": [
-                int(name.split()[-1])
-                for name in self.randomized_red_bricks
-            ],
-            "randomizedShips": self.options.randomize_ships.value,
-            "haveWallets": self.options.progressive_wallets.value,
-        }
+		for _ in range(remaining):
+			self.multiworld.itempool.append(
+				self.create_item(
+					self.random.choice(filler_items)
+				)
+			)
+
+	def get_used_characters(self):
+		used_characters = set()
+
+		used_characters.update(worlds.lsw3.character_regions.hub_characters)
+
+		if self.options.use_brig_characters.value:
+			used_characters.update(brig_characters)
+
+		if self.options.use_groundBattle_characters.value:
+			used_characters.update(ground_battle_characters)
+
+		if self.options.use_minikit_characters.value:
+			used_characters.update(minikit_characters)
+
+		return used_characters
+
+	def create_item(self, name):
+		return LSW3Item(
+			name,
+			self.item_name_to_classification[name],
+			self.item_name_to_id[name],
+			self.player,
+		)
+
+	def set_rules(self):
+		self.multiworld.completion_condition[self.player] = lambda state: all(
+			state.has(name, self.player)
+			for name in self.randomized_red_bricks
+		)
+
+	def generate_basic(self):
+		pass
+
+	def fill_slot_data(self):
+		return {
+			"randomized_red_bricks": [
+				int(name.split()[-1])
+				for name in self.randomized_red_bricks
+			],
+			"randomizedShips": self.options.randomize_ships.value,
+			"haveWallets": self.options.progressive_wallets.value,
+		}
         

@@ -39,6 +39,10 @@ class RandomizeBrigCharacters(Toggle):
 class RandomizeShips(Toggle):
     """Randomize Ships"""
     display_name = "Randomize Ships?"
+
+class ProgressiveLevels(Toggle): # {
+    """DO NOT USE DO NOT USE"""
+    display_name = "DO NOT USE DO NOT USE"
     
 @dataclass
 class LSW3Options(PerGameCommonOptions):
@@ -48,4 +52,5 @@ class LSW3Options(PerGameCommonOptions):
     use_minikit_characters: RandomizeMinikitCharacters
     use_groundBattle_characters: RandomizeGroundBattleCharacters
     use_brig_characters: RandomizeBrigCharacters
-    randomize_ships :RandomizeShips
+    randomize_ships: RandomizeShips
+    progressive_levels: ProgressiveLevels

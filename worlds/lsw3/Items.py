@@ -1,7 +1,10 @@
+# pyrefly: ignore [missing-import]
 from BaseClasses import Item
 
 from .Characters import CHARACTERS
 from .Ships import SHIPS
+from .LSW3Client.lsw3_data_pointers import LEVELS
+
 
 GAME_NAME = "LEGO Star Wars III: The Clone Wars"
 
@@ -23,20 +26,24 @@ ITEM_GOLD_BRICK = BASE_ID + 0x0001
 
 # Red Bricks
 RED_BRICK_ITEM_IDS = {
-    f"Red Brick {i}": BASE_ID + 0x0200 + i
-    for i in range(1, 19)
+	f"Red Brick {i}": BASE_ID + 0x0200 + i
+	for i in range(1, 19)
 }
 
 # Characters
 CHARACTER_ITEM_IDS = {
-    name: BASE_ID + 0x0100 + index
-    for index, name in enumerate(CHARACTERS)
+	name: BASE_ID + 0x0100 + index
+	for index, name in enumerate(CHARACTERS)
 }
 # Ships
 SHIP_ITEM_IDS = {
-    name: BASE_ID + 0x0500 + index
-    for index, name in enumerate(SHIPS)
+	name: BASE_ID + 0x0500 + index
+	for index, name in enumerate(SHIPS)
 }
 
+ITEM_PROGRESSIVE_DOOKU = BASE_ID + 0X0600
+ITEM_PROGRESSIVE_VENTRESS = BASE_ID + 0X0601
+ITEM_PROGRESSIVE_GRIEVOUS = BASE_ID + 0X0602
+
 class LSW3Item(Item):
-    game = GAME_NAME
+	game = GAME_NAME
