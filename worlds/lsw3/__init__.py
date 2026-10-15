@@ -1,10 +1,12 @@
 # pyrefly: ignore-errors [unknown-name]
+import sys
 
 # pyrefly: ignore [missing-import]
 from BaseClasses import Region, ItemClassification
 # pyrefly: ignore [missing-import]
 from worlds.AutoWorld import World
 
+import worlds.lsw3.Items
 import worlds.lsw3.character_regions
 from .options import LSW3Options
 
@@ -185,35 +187,14 @@ if __name__ == "__main__":
 
 
 def launch_client(*args):
-	dolphin_path = get_dolphin_path()
-
-	if dolphin_path is None:
-		return
-
-	print(f"Launching Dolphin: {dolphin_path}")
-
-	if not dolphin_is_running():
-		subprocess.Popen([str(dolphin_path)])
-
-	show_step(
-		"Open LEGO Star Wars III."
-	)
-
-	show_step(
-		"Load/Create a save file.\n\n"
-		"Do not start the game."
-	)
-
-	show_step(
-		"Launching client."
-	)
-
-	from .LSW3Client.client import run_client
-
-	launch(
-		run_client,
-		name="LEGO Star Wars III: The Clone Wars Client",
-	)
+    subprocess.Popen(
+        [
+            sys.executable,
+            "-c",
+            "from worlds.lsw3.startup import main; main()",
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+    )
 
 
 components.append(
@@ -237,6 +218,8 @@ class LSW3World(World):
 
 	numProgWallets = 5
 
+	from .Items import JUNK_ITEM_IDS
+
 	item_name_to_id = {
 		"Gold Brick": ITEM_GOLD_BRICK,
 
@@ -249,10 +232,13 @@ class LSW3World(World):
 		"1000 Studs": ITEM_STUDS_1000,
 		"10000 Studs": ITEM_STUDS_10000,
 
+		**JUNK_ITEM_IDS,
+
 		"Progressive Wallet": ITEM_PROGRESSIVE_WALLET,
 		"Progressive Ventress": ITEM_PROGRESSIVE_VENTRESS,
 		"Progressive Grievous": ITEM_PROGRESSIVE_GRIEVOUS,
-		"Progressive Dooku": ITEM_PROGRESSIVE_DOOKU
+		"Progressive Dooku": ITEM_PROGRESSIVE_DOOKU,
+
 	}
 
 	item_name_to_classification = {
@@ -262,6 +248,11 @@ class LSW3World(World):
 		"100 Studs": ItemClassification.filler,
 		"1000 Studs": ItemClassification.filler,
 		"10000 Studs": ItemClassification.filler,
+
+		**{
+			name: ItemClassification.filler
+			for name in JUNK_ITEM_IDS
+		},
 
 		"Progressive Ventress": ItemClassification.progression,
 		"Progressive Grievous": ItemClassification.progression,
@@ -451,9 +442,9 @@ class LSW3World(World):
 			"100 Studs",
 			"1000 Studs",
 			"10000 Studs",
-			# "Asthmatic Robot",
-			# "Roger Roger",
-			# "Jedi Scum!"
+			"Asthmatic Robot",
+			"Roger Roger",
+			"Jedi Scum!"
 		]
 
 		# Calculate the number of locations and items for this player.
@@ -526,4 +517,4 @@ class LSW3World(World):
 			"haveWallets": self.options.progressive_wallets.value,
 			"progressiveLevels": self.options.progressive_levels.value,
 		}
-        
+

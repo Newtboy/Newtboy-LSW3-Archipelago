@@ -45,7 +45,8 @@ from worlds.lsw3.Items import (
 	ITEM_PROGRESSIVE_WALLET,
 	ITEM_PROGRESSIVE_DOOKU,
 	ITEM_PROGRESSIVE_GRIEVOUS,
-	ITEM_PROGRESSIVE_VENTRESS
+	ITEM_PROGRESSIVE_VENTRESS,
+	JUNK_ITEM_IDS
 )
 
 from worlds.lsw3.Locations import (
@@ -576,8 +577,6 @@ class LSW3Context(CommonContext):
 		if item.item in STUD_VALUES:
 			amount = STUD_VALUES[item.item]
 			self.game_memory.studs += amount
-
-			print(f"Received {amount:,} Studs!")
 			return
 
 		if item.item == ITEM_PROGRESSIVE_WALLET:
@@ -665,6 +664,12 @@ class LSW3Context(CommonContext):
 			if item.item == item_id:
 				await self.receive_ship(name)
 				return
+			# }
+
+		for name, item_id in JUNK_ITEM_IDS.items():
+			if item.item == item_id:
+				return
+
 
 		print(f"Unknown LSW3 item ID: {item.item}")
 

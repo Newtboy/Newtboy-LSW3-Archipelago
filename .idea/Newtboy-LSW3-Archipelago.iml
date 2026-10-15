@@ -2,9 +2,10 @@
 <module type="PYTHON_MODULE" version="4">
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/worlds/lsw3" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
     </content>
-    <orderEntry type="jdk" jdkName="~\AppData\Local\Python\pythoncore-3.13-64\python.exe" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="~\Desktop\LSW3-Archipelago-Git\.venv" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PyDocumentationSettings">
