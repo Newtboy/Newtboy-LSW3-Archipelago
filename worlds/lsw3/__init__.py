@@ -185,16 +185,9 @@ def main():
 if __name__ == "__main__":
 	main()
 
-
 def launch_client(*args):
-    subprocess.Popen(
-        [
-            sys.executable,
-            "-c",
-            "from worlds.lsw3.startup import main; main()",
-        ],
-        cwd=Path(__file__).resolve().parents[2],
-    )
+    from worlds.lsw3.startup import main
+    main()
 
 
 components.append(
