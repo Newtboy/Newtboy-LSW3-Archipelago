@@ -26,6 +26,9 @@ def sync_folder(source, destination):
         if ".venv" in source_file.parts:
             continue
 
+        if ".apworld" in source_file.parts:
+            continue
+
         if ("sync.py" in source_file.parts): # {
             continue
 

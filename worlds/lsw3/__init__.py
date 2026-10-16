@@ -471,6 +471,7 @@ class LSW3World(World):
 		used_characters = set()
 
 		used_characters.update(worlds.lsw3.character_regions.hub_characters)
+		used_characters.update(worlds.lsw3.character_regions.level_unlock_characters)
 
 		if self.options.use_brig_characters.value:
 			used_characters.update(brig_characters)

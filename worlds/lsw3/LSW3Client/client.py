@@ -24,6 +24,8 @@ warnings.filterwarnings("ignore", category=UserWarning)
 import asyncio
 import logging
 
+fallback = True
+
 # pyrefly: ignore [missing-import]
 from CommonClient import (
 	CommonContext,
@@ -205,6 +207,8 @@ class LSW3Context(CommonContext):
 					for level in self.game_memory.LEVELS
 				}
 
+				if ((self.progressiveLevels)): # {
+					asyncio.create_task(self.level_checker())
 				asyncio.create_task(self.game_watcher())
 
 			except RuntimeError as e:
@@ -215,18 +219,23 @@ class LSW3Context(CommonContext):
 		await self.get_username()
 		await self.send_connect()
 
+	async def level_checker(self): # Fuck idk
+		while (True): # {
+			await self.check_levels()
+			await asyncio.sleep(0.001)
+
 	# lookit da game
 	async def game_watcher(self):
 		"""Checks various aspects of the game and ensures running correctly"""
 		while True:
 			await self.check_connection()
+			if (self.progressiveLevels): # {
+				await self.check_levels()
 			await self.check_red_bricks()
 			await self.check_characters()
 			await self.check_ships()
 			if self.haveWallets:
 				await self.check_studs()
-			if (self.progressiveLevels): # {
-				await self.check_levels()
 			await self.check_stud_locations()
 			await self.check_gold_bricks()
 			await self.check_cheat_code()
@@ -246,36 +255,150 @@ class LSW3Context(CommonContext):
 			if location_name not in worlds.lsw3.LEVEL_LOCATION_IDS:
 				continue
 
+			cList = []
+
+			match level_name:
+				case "GA":
+					cList = [
+						"Anakin Skywalker",
+						"Padme Amidala",
+						"Obi-Wan Kenobi",
+					]
+
+				# Count Dooku
+				case "D1":  # Battle of Geonosis
+					cList = [
+						"Mace Windu",
+						"Kit Fisto",
+						"Ki-Adi-Mundi",
+					]
+				case "D2":  # Gungan General
+					cList = [
+						"Jar Jar Binks",
+						"Commander Stone",
+						"Clone Trooper",
+					]
+				case "D3":  # Jedi Crash
+					cList = [
+						"Ahsoka Tano",
+						"Aayla Secura",
+						"Commander Bly",
+					]
+				case "D4":  # Defenders of Peace
+					cList = [
+						"Wag Too",
+					]
+				case "D5":  # Weapons Factory
+					cList = [
+						"Luminara Unduli",
+						"Barriss Offee",
+						"Captain Rex",
+					]
+				case "D6":  # Legacy of Terror
+					cList = [
+						"Commander Cody",
+					]
+
+				# General Grievous
+				case "G1":  # Duel of the Droids
+					cList = [
+						"R3-S6",
+						"R2-D2",
+					]
+				case "G2":  # Shadow of Malevolence
+					cList = [
+						"Plo Koon",
+					]
+				case "G3":  # Destroy Malevolence
+					cList = [
+						"C-3PO",
+					]
+				case "G4":  # Lair of Grievous
+					cList = [
+						"Nahdar Vebb",
+						"Commander Fil",
+						"Heavy Weapons Clone Trooper",
+					]
+				case "G5":  # Rookies
+					cList = [
+						"Hevy",
+						"Echo",
+						"Fives",
+					]
+				case "G6":  # Grievous Intrigue
+					cList = [
+						"Adi Gallia",
+						"Eeth Koth",
+					]
+
+				# Asajj Ventress
+				case "V1":  # The Hidden Enemy
+					cList = []
+				case "V2":  # Ambush
+					cList = [
+						"Yoda",
+						"Lieutenant Thire",
+						"Jek",
+						"Rys",
+					]
+				case "V3":  # Blue Shadow Virus
+					cList = []
+				case "V4":  # Storm Over Ryloth
+					cList = []
+				case "V5":  # Innocents of Ryloth
+					cList = [
+						"Waxer",
+						"Boil",
+					]
+				case "V6":  # Liberty on Ryloth
+					cList = [
+						"Commander Ponds",
+					]
+
 			state = self.level_state[level_name]
 			is_unlocked = self.game_memory.level_unlocked(level_name)
 
-			# Levels without progressive items only need their location checked.
 			if level_name in self.game_memory.NON_LOCKABLE_LEVELS:
 				if is_unlocked and not state["location_checked"]:
 					state["location_checked"] = True
 
-					location_id = worlds.lsw3.LEVEL_LOCATION_IDS[location_name]
+					location_ids = [
+						worlds.lsw3.LEVEL_LOCATION_IDS[location_name],
+						*(
+							worlds.lsw3.CHARACTER_LOCATION_IDS[
+								f"Character Unlock: {name}"
+							]
+							for name in cList
+						),
+					]
+
 					await self.send_msgs([{
 						"cmd": "LocationChecks",
-						"locations": [location_id],
+						"locations": location_ids,
 					}])
 
 				continue
 
-			# Detect natural completion and report the location.
 			if is_unlocked and not state["location_checked"]:
 				self.game_memory.lock_level(level_name)
+				is_unlocked = False
 				state["location_checked"] = True
 
-				location_id = worlds.lsw3.LEVEL_LOCATION_IDS[location_name]
+				location_ids = [
+					worlds.lsw3.LEVEL_LOCATION_IDS[location_name],
+					*(
+						worlds.lsw3.CHARACTER_LOCATION_IDS[
+							f"Character Unlock: {name}"
+						]
+						for name in cList
+					),
+				]
+
 				await self.send_msgs([{
 					"cmd": "LocationChecks",
-					"locations": [location_id],
+					"locations": location_ids,
 				}])
 
-				is_unlocked = False
-
-			# Progressive levels require both conditions.
 			if state["ap_received"] and state["location_checked"]:
 				if not self.game_memory.level_unlocked(level_name):
 					self.game_memory.complete_level(level_name)
@@ -315,51 +438,68 @@ class LSW3Context(CommonContext):
 	async def check_characters(self):
 		"""Check character locations and apply AP unlocks."""
 
-		location_buyable_characters = (
-				self.hub_characters
-				| self.minikit_characters
-				| self.brig_characters
-		)
-
 		for character in self.game_memory.CHARACTERS:
 			state = self.character_state[character]
+
+			ap_received = state["ap_received"]
+			bought = state["bought"]
+			location_checked = state["location_checked"]
+
 			is_unlocked = self.game_memory.character_unlocked(character)
 
 			if character in level_unlock_characters:
 				# Natural level completion unlocks the character.
-				if is_unlocked and not state["location_checked"]:
+				if is_unlocked and not location_checked:
 					self.game_memory.lock_character(character)
-
 					await self.character_collected(character)
 					state["location_checked"] = True
-
+					location_checked = True
 					is_unlocked = False
 
-				# Both conditions are required.
-				if state["ap_received"] and state["location_checked"]:
-					if not self.game_memory.character_unlocked(character):
+				if ap_received and location_checked:
+					if not is_unlocked:
 						self.game_memory.unlock_character(character)
-
 				elif is_unlocked:
 					self.game_memory.lock_character(character)
 
-			elif character in location_buyable_characters:
-				# Natural acquisition triggers the location check.
-				if is_unlocked:
+				continue
+
+			elif character in hub_characters:
+				# HUB characters must be purchased naturally first.
+				if is_unlocked and not ap_received:
 					state["bought"] = True
+					bought = True
 
-				if state["bought"] and not state["location_checked"]:
-					self.game_memory.lock_character(character)
-
-					await self.character_collected(character)
-					state["location_checked"] = True
-
-					is_unlocked = False
-
-				if state["ap_received"] and state["location_checked"]:
-					if not self.game_memory.character_unlocked(character):
+				if ap_received and location_checked:
+					if not is_unlocked:
 						self.game_memory.unlock_character(character)
 
+				elif bought:
+					if not location_checked:
+						await self.character_collected(character)
+						state["location_checked"] = True
+						location_checked = True
+
+					self.game_memory.lock_character(character)
+
+				continue
+
+			elif character in minikit_characters or character in brig_characters:
+				# Preserve the existing location-buyable behavior.
+				if is_unlocked:
+					state["bought"] = True
+					bought = True
+
+				if bought and not location_checked:
+					self.game_memory.lock_character(character)
+					await self.character_collected(character)
+					state["location_checked"] = True
+					location_checked = True
+					is_unlocked = False
+
+				if ap_received and location_checked:
+					if not is_unlocked:
+						self.game_memory.unlock_character(character)
 				elif is_unlocked:
 					self.game_memory.lock_character(character)
 
@@ -367,17 +507,16 @@ class LSW3Context(CommonContext):
 				# Preserve the existing behavior for other characters.
 				if is_unlocked:
 					state["bought"] = True
+					bought = True
 
-				if state["ap_received"]:
+				if ap_received:
 					if not is_unlocked:
 						self.game_memory.unlock_character(character)
 
-				elif state["bought"]:
-					if not state["location_checked"]:
+				elif bought:
+					if not location_checked:
 						await self.character_collected(character)
 						state["location_checked"] = True
-
-					self.game_memory.lock_character(character)
 
 	async def character_collected(self, character):
 		"""
