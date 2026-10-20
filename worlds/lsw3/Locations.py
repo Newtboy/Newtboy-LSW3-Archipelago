@@ -1,4 +1,3 @@
-# pyrefly: ignore [missing-import]
 from BaseClasses import Location
 from .Characters import CHARACTERS as ch
 from .Ships import SHIPS as Ships
@@ -37,7 +36,7 @@ STUD_LOCATION_IDS = {
 }
 
 
-LEVEL_LOCATION_IDS = {
+LEVEL_COMPLETION_LOCATION_IDS = {
 	# Level COMPLETION
 	f"Level Completed: {name}": 5000 + i
 	for i, (name, level) in enumerate(LEVELS.items())
@@ -45,6 +44,13 @@ LEVEL_LOCATION_IDS = {
 	# if name != "CD" and name != "HC" # Genuinely what am I doing atp
 }
 
+ALL_LOCATION_TABLE = {
+	**RED_BRICK_LOCATION_IDS,
+	**CHARACTER_LOCATION_IDS,
+	**SHIP_LOCATION_IDS,
+	**STUD_LOCATION_IDS,
+	**LEVEL_COMPLETION_LOCATION_IDS
+}
 
 class LSW3Location(Location):
 	game = GAME_NAME

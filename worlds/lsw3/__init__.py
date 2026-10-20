@@ -8,7 +8,7 @@ from worlds.AutoWorld import World
 
 import worlds.lsw3.Items
 import worlds.lsw3.character_regions
-from .options import LSW3Options
+from .Options import LSW3Options
 
 from .Items import (
 	LSW3Item,
@@ -33,7 +33,7 @@ from .Locations import (
 	CHARACTER_LOCATION_IDS,
 	STUD_LOCATION_IDS,
 	SHIP_LOCATION_IDS,
-	LEVEL_LOCATION_IDS
+	LEVEL_COMPLETION_LOCATION_IDS
 )
 
 from .character_regions import (
@@ -45,6 +45,26 @@ from .character_regions import (
 from .ship_regions import (
 	separatist_ships,
 	republic_ships
+)
+
+from .character_regions import (
+    jedi,
+    sith,
+    grappling_hook,
+    protocol,
+    astromech,
+    hover,
+    high_jump,
+    short,
+    commander,
+    clone,
+    bounty_hunter,
+    silver_destroyer,
+    gold_destroyer,
+    target,
+    electric_panels,
+    sniper,
+    tx_20_panels,
 )
 
 ########################################## Launcher Code ###################################################
@@ -207,6 +227,7 @@ class LSW3World(World):
 	game = GAME_NAME
 
 	options_dataclass = LSW3Options
+	# pyrefly: ignore[bad-override-mutable-attribute]
 	options: LSW3Options
 
 	numProgWallets = 5
@@ -274,7 +295,7 @@ class LSW3World(World):
 		**CHARACTER_LOCATION_IDS,
 		**STUD_LOCATION_IDS,
 		**SHIP_LOCATION_IDS,
-		**LEVEL_LOCATION_IDS,
+		**LEVEL_COMPLETION_LOCATION_IDS,
 	}
 
 	def create_regions(self):
@@ -307,7 +328,7 @@ class LSW3World(World):
 			)
 
 		if (self.options.progressive_levels.value): # {
-			for name, location_id in LEVEL_LOCATION_IDS.items(): # {
+			for name, location_id in LEVEL_COMPLETION_LOCATION_IDS.items(): # {
 				menu.locations.append(
 					LSW3Location(
 						self.player,
@@ -362,19 +383,58 @@ class LSW3World(World):
 		# Characters eligible for randomization.
 		eligible_characters = self.get_used_characters()
 
-		# Randomize the configured percentage of eligible characters.
+		# Each category must contribute at least one character.
+		character_categories = [
+			jedi,
+			sith,
+			grappling_hook,
+			protocol,
+			astromech,
+			hover,
+			high_jump,
+			short,
+			commander,
+			clone,
+			bounty_hunter,
+			silver_destroyer,
+			gold_destroyer,
+			target,
+			electric_panels,
+			sniper,
+			tx_20_panels,
+		]
+
+		# Choose one available character from each category, guaranteeing you can get at least 1 of every kind
+		guaranteed_characters = set()
+
+		for category in character_categories:
+			available = list(category & eligible_characters)
+
+			if available:
+				guaranteed_characters.add(self.random.choice(available))
+
+		# Calculate the configured character count.
 		character_count = round(
 			len(eligible_characters)
 			* self.options.character_percent.value
 			/ 100
 		)
 
-		self.randomized_characters = self.random.sample(
-			list(eligible_characters),
-			character_count,
+		# Ensure every guaranteed character fits in the pool.
+		character_count = max(character_count, len(guaranteed_characters))
+
+		# Fill the remaining slots randomly without duplicates.
+		remaining_characters = list(
+			eligible_characters - guaranteed_characters
 		)
 
-		randomized_character_count = len(self.randomized_characters)
+		self.randomized_characters = list(guaranteed_characters)
+		self.randomized_characters.extend(
+			self.random.sample(
+				remaining_characters,
+				character_count - len(guaranteed_characters),
+			)
+		)
 
 		# Progressive Wallets
 		if self.options.progressive_wallets.value:
@@ -405,7 +465,7 @@ class LSW3World(World):
 		level_counts = {"D": 0, "V": 0, "G": 0}
 		unmatched_levels = []
 
-		for location_name in LEVEL_LOCATION_IDS:
+		for location_name in LEVEL_COMPLETION_LOCATION_IDS:
 			level_name = location_name.removeprefix("Level Completed: ")
 
 			if len(level_name) >= 2 and level_name[0] in level_counts and level_name[1].isdigit():
@@ -493,10 +553,11 @@ class LSW3World(World):
 		)
 
 	def set_rules(self):
+		from .Rules import set_rules
 		self.multiworld.completion_condition[self.player] = lambda state: all(
-			state.has(name, self.player)
-			for name in self.randomized_red_bricks
+			state.has("Level Completed: ZB", self.player)
 		)
+		set_rules(self)
 
 	def generate_basic(self):
 		pass

@@ -252,7 +252,7 @@ class LSW3Context(CommonContext):
 		for level_name in self.game_memory.LEVELS:
 			location_name = f"Level Completed: {level_name}"
 
-			if location_name not in worlds.lsw3.LEVEL_LOCATION_IDS:
+			if location_name not in worlds.lsw3.LEVEL_COMPLETION_LOCATION_IDS:
 				continue
 
 			cList = []
@@ -363,7 +363,7 @@ class LSW3Context(CommonContext):
 					state["location_checked"] = True
 
 					location_ids = [
-						worlds.lsw3.LEVEL_LOCATION_IDS[location_name],
+						worlds.lsw3.LEVEL_COMPLETION_LOCATION_IDS[location_name],
 						*(
 							worlds.lsw3.CHARACTER_LOCATION_IDS[
 								f"Character Unlock: {name}"
@@ -385,7 +385,7 @@ class LSW3Context(CommonContext):
 				state["location_checked"] = True
 
 				location_ids = [
-					worlds.lsw3.LEVEL_LOCATION_IDS[location_name],
+					worlds.lsw3.LEVEL_COMPLETION_LOCATION_IDS[location_name],
 					*(
 						worlds.lsw3.CHARACTER_LOCATION_IDS[
 							f"Character Unlock: {name}"

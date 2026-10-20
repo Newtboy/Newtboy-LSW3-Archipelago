@@ -1,6 +1,7 @@
 # =========================================================
 # Character configuration
 # =========================================================
+
 hub_characters = {
 	"Cad Bane",
 	"Count Dooku",
@@ -132,3 +133,216 @@ ground_battle_characters = {
 # NOTE:
 # "Destroyer Droid" is listed as "Droideka" instead
 # "Siover Boll" and "Onaconda Farr" use the spellings from what I saw in game
+
+
+# Other separations for logic
+
+jedi = {
+	"Obi-Wan Kenobi",
+	"Anakin Skywalker",
+	"Yoda",
+	"Ahsoka",
+	"Mace Windu",
+	"Ki-Adi Mundi",
+	"Kit Fisto",
+	"Aayla Secura",
+	"Luminara Unduli",
+	"Barriss Offee",
+	"Plo Koon",
+	"Nahdar Vebb",
+	"Adi Gallia",
+	"Eeth Koth",
+	"Count Dooku",
+	"Luke Skywalker (Classic)",
+	"Obi-Wan Kenobi (Classic)",
+	"Qui-Gon Jinn (Classic)",
+	"Darth Maul (Classic)",
+	"Darth Vader (Classic)",
+	"Darth Vader Battle Damaged (Classic)",
+	"Vader's Apprentice (Classic)",
+	"Savage Opress",
+}
+sith = {
+	"Count Dooku",
+	"Asajj Ventress",
+	"Darth Maul (Classic)",
+	"Darth Sidious (Classic)",
+	"Darth Vader (Classic)",
+	"Darth Vader Battle Damaged (Classic)",
+	"Vader's Apprentice (Classic)",
+	"Savage Opress",
+}
+grappling_hook = {
+	"Padme Amidala",
+	"Commander Cody",
+	"Lieutenant Thire",
+	"Jek",
+	"Rys",
+	"Captain Rex",
+	"Waxer",
+	"Boil",
+	"Commander Ponds",
+	"Commander Stone",
+	"Commander Bly",
+	"Wag Too",
+	"Clone Trooper",
+	"Commander Fil",
+	"Heavy Weapons Clone Trooper",
+	"Hevy",
+	"Echo",
+	"Fives",
+	"Cad Bane",
+	"Aurra Sing",
+	"Robonino",
+	"Shahan Alama",
+	"HELIOS-3D",
+	"IG-86",
+	"Commando Droid",
+	"Admiral Yularen",
+	"Jango Fett",
+	"TX-20",
+	"Workout Clone Trooper",
+	"Clone Pilot",
+	"Sionver Boll",
+	"Bail Organa",
+	"Senate Commando (Captain)",
+	"Senate Commando",
+	"Admiral Ackbar (Classic)",
+	"Captain Antilles (Classic)",
+	"Chewbacca (Classic)",
+	"Han Solo (Classic)",
+	"Lando Calrissian (Classic)",
+	"Princess Leia (Classic)",
+	"Rebel Commando (Classic)",
+	"Wedge Antilles (Classic)",
+	"Boba Fett (Classic)",
+	"Greedo (Classic)",
+	"Clone Shadow Trooper (Classic)",
+	"Stormtrooper (Classic)",
+	"Tusken Raider (Classic)",
+	"Dr. Nuvo Vindi",
+	"Wat Tambor",
+	"Lok Durd",
+	"Poggle the Lesser",
+	"Nute Gunray",
+	"Whorm Loathsom",
+	"Chancellor Palpatine",
+	"Grand Moff Tarkin"
+}
+protocol = {
+	"C-3PO",
+	"HELIOS-3D",
+	"IG-86",
+	"Luxury Droid"
+}
+astromech = {
+	"R3-S6",
+	"R2-D2",
+	"HELIOS-3D",
+	"IG-86",
+	"R4-P17",
+	"R6-H5"
+}
+hover = {
+	"R3-S6",
+	"R2-D2",
+	"Cad Bane",
+	"Jango Fett",
+	"R4-P17",
+	"R6-H5",
+	"Boba Fett (Classic)"
+}
+high_jump = {
+	"Jar Jar Binks"
+}
+short = {
+	"Yoda",
+	"Wag Too",
+	"Robonino",
+	"Tee Watt Kaa"
+}
+commander = {
+	"Commander Cody",
+	"Captain Rex",
+	"Commander Ponds",
+	"Commander Stone",
+	"Commander Bly",
+	"Commander Fil",
+	"Battle Droid Commander",
+	"TX-20",
+}
+clone = {
+	"Commander Cody",
+	"Lieutenant Thire",
+	"Jek",
+	"Rys",
+	"Captain Rex",
+	"Waxer",
+	"Boil",
+	"Commander Ponds",
+	"Commander Stone",
+	"Commander Bly",
+	"Clone Trooper",
+	"Commander Fil",
+	"Heavy Weapons Clone Trooper",
+	"Hevy",
+	"Echo",
+	"Fives",
+	"Workout Clone Trooper",
+	"Clone Pilot",
+	"Clone Shadow Trooper (Classic)",
+	"Stormtrooper (Classic)"
+}
+bounty_hunter = {
+	"Cad Bane",
+	"Aurra Sing",
+	"Robonino",
+	"Shahan Alama",
+	"HELIOS-3D",
+	"IG-86",
+	"Commando Droid",
+	"Jango Fett",
+	"Boba Fett (Classic)",
+	"Greedo (Classic)"
+}
+silver_destroyer = {
+	"Jek",
+	"Waxer",
+	"Heavy Weapons Clone Trooper",
+	"Echo",
+	"Cad Bane",
+	"Aurra Sing",
+	"Robonino",
+	"Shahan Alama",
+	"HELIOS-3D",
+	"IG-86",
+	"Commando Droid",
+	"Jango Fett",
+	"Boba Fett (Classic)",
+	"Greedo (Classic)"
+}
+gold_destroyer = {
+	"Lieutenant Thire",
+	"Hevy",
+	"Gold Super Battle Droid"
+}
+target = {
+	"Padme Amidala",
+	"Commander Cody",
+}
+electric_panels = {
+	"Robonino",
+	"MagnaGuard"
+}
+sniper = {
+	"Aurra Sing",
+	"HELIOS-3D",
+	"IG-86"
+}
+tx_20_panels = {
+	"MagnaGuard",
+	"Battle Droid",
+	"Battle Droid Commander",
+	"Droideka",
+	"TX-20"
+}
