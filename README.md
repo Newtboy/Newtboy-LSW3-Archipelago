@@ -1,8 +1,6 @@
 
 # LEGO Star Wars III: The Clone Wars
 
-*A galaxy far, far away... randomized.*
-
 An [Archipelago](https://archipelago.gg/) implementation for **LEGO Star Wars III: The Clone Wars**, bringing the Clone Wars to the multi-game randomizer.
 
 ## Project Status
@@ -12,19 +10,20 @@ Currently only tested with the 1.1 USA version of the game.
 
 ### Current Features
 
-| Feature | Status | Notes |
-|---|---|---|
-| Red Bricks | Implemented | Acts as a [McGuffin](https://archipelago.gg/) item. Collecting all randomized Red Bricks is currently the goal. May have bugs; behavior hasn't been fully investigated. |
-| Character Unlocks | Implemented | Character randomization percentage is configurable, believed to range from 20–100%. |
-| Character Categories | Implemented | Options to enable or disable Ground Battle, Brig, and Minikit characters. The category options may have bugs. |
-| Gold Bricks | Partial | Backend groundwork exists, but they are not yet integrated into the randomizer. |
+| Feature              | Status      | Notes                                                                                                                                                                   |
+|----------------------|-------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Red Bricks           | Implemented | Acts as a [McGuffin](https://archipelago.gg/) item. Collecting all randomized Red Bricks is currently the goal. May have bugs; behavior hasn't been fully investigated. |
+| Character Unlocks    | Implemented | Character randomization percentage is configurable, believed to range from 20–100%.                                                                                     |
+| Character Categories | Implemented | Options to enable or disable Ground Battle, Brig, and Minikit characters. The category options may have bugs.                                                           |
+| Level unlocks        | Implemented | Progressive levels only, due to how the game unlocks them.                                                                                                              |
+| Ship Unlocks         | Implemented | May still have bugs.                                                                                                                                                    |
+| Logic                | Implemented | Still in testing, should be working                                                                                                                                     |
+| Gold Bricks          | Partial     | Backend groundwork exists, but they are not yet integrated into the randomizer.                                                                                         |
 
 ### Planned Features
 
 | Feature | Status |
 |---|---|
-| Level Unlocks | In progress; likely nextx2 release |
-| Ship Unlocks | Planned for next release; excludes the Resolute and Invisible Hand |
 | Minikits | Not implemented; implementation plan TBD |
 | Vehicle Locking | Planned; details TBD |
 | Small Air Support Vehicles | Planned; details TBD |

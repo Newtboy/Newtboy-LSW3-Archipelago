@@ -1,5 +1,4 @@
-from rule_builder.rules import Has, HasAllCounts, HasFromListUnique, True_
-from rule_builder.rules import *
+from rule_builder.rules import Has, HasAllCounts, True_, Rule
 import worlds.lsw3
 from rule_builder.rules import Has, HasFromListUnique
 from .Locations import LEVEL_COMPLETION_LOCATION_IDS
@@ -137,3 +136,24 @@ def set_rules(world: worlds.lsw3.LSW3World):
 					location_name, player
 				)
 				location.access_rule = republic_ship_rule.resolve(world)
+
+	if world.options.use_minikit_characters:
+		all_minikit_abilities = (
+				has_force& has_dark_force& has_grappler& has_protocol& has_astromech& has_high_jump& has_hover
+				& has_short& has_commander& has_clone& has_bounty_hunter& has_silver_br& has_gold_br& has_target&
+				has_electric& has_sniper& has_tx20
+		).resolve(world)
+
+		for character in minikit_characters:
+			location = world.multiworld.get_location(
+				f"Character Unlock: {character}", player
+			)
+			location.access_rule = all_minikit_abilities
+
+	if (world.options.use_brig_characters): # {
+		world.multiworld.get_location("Dr. Nuvo Vindi", player).access_rule = HasAllCounts({"Progressive Ventress": 2}).resolve(world)
+		world.multiworld.get_location("Wat Tambor", player).access_rule = HasAllCounts({"Progressive Ventress": 5}).resolve(world)
+		world.multiworld.get_location("Lok Durd", player).access_rule = HasAllCounts({"Progressive Dooku": 3}).resolve(world)
+		world.multiworld.get_location("Poggle the Lesser", player).access_rule = HasAllCounts({"Progressive Dooku": 5}).resolve(world)
+		world.multiworld.get_location("Nute Gunray", player).access_rule = True_().resolve(world) # Simply because it's a ground assault and there is no lock yet
+		world.multiworld.get_location("Whorm Loathsom", player).access_rule = True_().resolve(world) # Simply because it's a ground assault and there is no lock yet
