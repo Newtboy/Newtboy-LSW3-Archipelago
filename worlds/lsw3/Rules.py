@@ -12,6 +12,101 @@ def set_rules(world: worlds.lsw3.LSW3World):
 
 	world.multiworld.completion_condition[world.player] = (lambda state: state.can_reach_location("Level Completed: ZB", world.player))
 
+	character_level_dict: dict[str, list] = {
+		"GA": [
+			"Anakin Skywalker",
+			"Padme Amidala",
+			"Obi-Wan Kenobi",
+		],
+		# Count Dooku
+		"D1":  # Battle of Geonosis
+			[
+				"Mace Windu",
+				"Kit Fisto",
+				"Ki-Adi-Mundi",
+			],
+		"D2":  # Gungan General
+			[
+				"Jar Jar Binks",
+				"Commander Stone",
+				"Clone Trooper",
+			],
+		"D3":  # Jedi Crash
+			[
+				"Ahsoka Tano",
+				"Aayla Secura",
+				"Commander Bly",
+			],
+		"D4":  # Defenders of Peace
+			[
+				"Wag Too",
+			],
+		"D5":  # Weapons Factory
+			[
+				"Luminara Unduli",
+				"Barriss Offee",
+				"Captain Rex",
+			],
+		"D6":  # Legacy of Terror
+			[
+				"Commander Cody",
+			],
+		# General Grievous
+		"G1":  # Duel of the Droids
+			[
+				"R3-S6",
+				"R2-D2",
+			],
+		"G2":  # Shadow of Malevolence
+			[
+				"Plo Koon",
+			],
+		"G3":  # Destroy Malevolence
+			[
+				"C-3PO",
+			],
+		"G4":  # Lair of Grievous
+			[
+				"Nahdar Vebb",
+				"Commander Fil",
+				"Heavy Weapons Clone Trooper",
+			],
+		"G5":  # Rookies
+			[
+				"Hevy",
+				"Echo",
+				"Fives",
+			],
+		"G6":  # Grievous Intrigue
+			[
+				"Adi Gallia",
+				"Eeth Koth",
+			],
+		# Asajj Ventress
+		"V1":  # The Hidden Enemy
+			[],
+		"V2":  # Ambush
+			[
+				"Yoda",
+				"Lieutenant Thire",
+				"Jek",
+				"Rys",
+			],
+		"V3":  # Blue Shadow Virus
+			[],
+		"V4":  # Storm Over Ryloth
+			[],
+		"V5":  # Innocents of Ryloth
+			[
+				"Waxer",
+				"Boil",
+			],
+		"V6":  # Liberty on Ryloth
+			[
+				"Commander Ponds",
+			]
+	}
+
 	used_characters = world.get_used_characters()
 
 	# Only characters that can appear in this world
@@ -96,6 +191,29 @@ def set_rules(world: worlds.lsw3.LSW3World):
 
 	# Progressive level requirements
 	if world.options.progressive_levels.value:
+		# Character unlock requirements
+		for level, character_list in character_level_dict.items():
+			if level == "GA":
+				rule = True_()
+			else:
+				prefix = level[0]
+				level_number = int(level[1:])
+				item_name = {
+					"D": "Progressive Dooku",
+					"V": "Progressive Ventress",
+					"G": "Progressive Grievous",
+				}[prefix]
+				rule = (
+					Has(item_name, count=level_number - 1)
+					if level_number > 1
+					else True_()
+				)
+
+			for character in character_list:
+				location = world.multiworld.get_location(
+					f"Character Unlock: {character}", player
+				)
+				location.access_rule = rule.resolve(world)
 		for location_name in LEVEL_COMPLETION_LOCATION_IDS:
 			level_name = location_name.removeprefix("Level Completed: ")
 
@@ -123,6 +241,13 @@ def set_rules(world: worlds.lsw3.LSW3World):
 					location.access_rule = Has(
 						item_name, count=level_number - 1
 					).resolve(world)
+		world.multiworld.get_location(
+			"Level Completed: ZB", player
+		).access_rule = HasAllCounts({
+			"Progressive Dooku": 6,
+			"Progressive Ventress": 6,
+			"Progressive Grievous": 6,
+		}).resolve(world)
 
 	# CD and HC require any Republic ship, but only when ships
 	# are randomized and their unlock items are in the item pool.
