@@ -8,7 +8,7 @@ from worlds.AutoWorld import World
 
 import worlds.lsw3.Items
 import worlds.lsw3.character_regions
-from .Options import LSW3Options
+from .LSW3Option import LSW3Options
 
 from .Items import (
 	LSW3Item,

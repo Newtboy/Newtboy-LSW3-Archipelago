@@ -11,7 +11,7 @@ def set_rules(world: worlds.lsw3.LSW3World):
 	player = world.player
 	world.get_used_characters()
 
-	world.multiworld.completion_condition[world.player] = lambda state: state.has("Level Completed: ZB", world.player)
+	world.multiworld.completion_condition[world.player] = (lambda state: state.can_reach_location("Level Completed: ZB", world.player))
 
 	used_characters = world.get_used_characters()
 
@@ -34,11 +34,6 @@ def set_rules(world: worlds.lsw3.LSW3World):
 	av_sniper = sniper & used_characters
 	av_tx20 = tx_20_panels & used_characters
 
-	# Extra helpers due to 2 character selected limit
-	av_silver_clone = av_clone & av_silver_br
-	av_gold_clone = av_clone & av_gold_br
-	av_electric_silver_br = av_electric & av_silver_br
-
 	# Ability requirements
 	has_force = HasFromListUnique(*available_jedi, count=1)
 	has_dark_force = HasFromListUnique(*available_sith, count=1) | (Has("Red Brick 2") & HasFromListUnique(*available_jedi, count=1))
@@ -50,8 +45,6 @@ def set_rules(world: worlds.lsw3.LSW3World):
 	has_short = HasFromListUnique(*av_short, count=1)
 	has_commander = HasFromListUnique(*av_commander, count=1)
 	has_clone = HasFromListUnique(*av_clone, count=1)
-	has_silver_clone = HasFromListUnique(*av_silver_clone, count=1)
-	has_gold_clone = HasFromListUnique(*av_gold_clone, count=1)
 	has_bounty_hunter = HasFromListUnique(*av_bounty_hunter, count=1)
 	has_silver_br = HasFromListUnique(*av_silver_br, count=1)
 	has_gold_br = HasFromListUnique(*av_gold_br, count=1)
@@ -61,7 +54,7 @@ def set_rules(world: worlds.lsw3.LSW3World):
 	has_tx20 = HasFromListUnique(*av_tx20, count=1)
 
 	has_republic_ship = HasFromListUnique(*republic_ships, count=1)
-	has_electric_silver_br = HasFromListUnique(*av_electric_silver_br, count=1)
+	has_separatist_ship = HasFromListUnique(*worlds.lsw3.separatist_ships, count=1)
 
 	using_wallets = world.options.progressive_wallets.value
 	using_ships = world.options.randomize_ships.value
@@ -92,7 +85,8 @@ def set_rules(world: worlds.lsw3.LSW3World):
 	set_brick_rule(8, has_force & (HasAllCounts({"Progressive Wallet": 3}) if using_wallets else True_()))
 	set_brick_rule(9, has_force & has_grappler & (HasAllCounts({"Progressive Wallet": 3}) if using_wallets else True_()))
 	set_brick_rule(10, has_silver_br & (HasAllCounts({"Progressive Wallet": 4}) if using_wallets else True_()) & (has_republic_ship if using_ships else True_()))
-	set_brick_rule(11, has_dark_force & has_electric_silver_br & (HasAllCounts({"Progressive Wallet": 4}) if using_wallets else True_()))
+	set_brick_rule(11, has_dark_force & (has_character_with(available_sith, av_silver_br) | has_character_with(av_silver_br) & Has("Red Brick 2")) & (HasAllCounts({"Progressive Wallet": 4}) if using_wallets else True_()))
+	#set_brick_rule(11, True_())
 	set_brick_rule(12, has_grappler & has_gold_br & has_force & (HasAllCounts({"Progressive Wallet": 2}) if using_wallets else True_()))
 	set_brick_rule(13, has_bounty_hunter & (HasAllCounts({"Progressive Wallet": 2}) if using_wallets else True_()) & (has_republic_ship if using_ships else True_()))
 	set_brick_rule(14, (has_character_with(available_sith) | Has("Red Brick 2")) & has_character_with(av_electric, av_tx20) & has_bounty_hunter) #sith, electric panels, tx-20 panels, bounty hunter though the cells DO stay unlocked so that's something
@@ -129,7 +123,7 @@ def set_rules(world: worlds.lsw3.LSW3World):
 					)
 					location.access_rule = Has(
 						item_name, count=level_number - 1
-					)
+					).resolve(world)
 
 	# CD and HC require any Republic ship, but only when ships
 	# are randomized and their unlock items are in the item pool.
@@ -142,4 +136,4 @@ def set_rules(world: worlds.lsw3.LSW3World):
 				location = world.multiworld.get_location(
 					location_name, player
 				)
-				location.access_rule = republic_ship_rule
+				location.access_rule = republic_ship_rule.resolve(world)
