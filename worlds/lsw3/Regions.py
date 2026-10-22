@@ -1,5 +1,5 @@
 import worlds.lsw3
-from BaseClasses import MultiWorld, Region, Entrance, Location, ItemClassification, state
+from BaseClasses import MultiWorld, Region, Entrance, Location, ItemClassification
 from .Locations import LSW3Location, ALL_LOCATION_TABLE, BASE_ID, studCheckLevels
 from .Items import LSW3Item
 from .LSW3Option import LSW3Options

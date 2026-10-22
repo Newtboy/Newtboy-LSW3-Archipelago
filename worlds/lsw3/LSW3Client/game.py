@@ -181,7 +181,7 @@ class LSW3Memory:
 	def set_level(self, name, val):
 		self.write_u8(self.LEVELS[name].unlockFlag, val)
 
-	def level_unlocked(self, name):
+	def level_completed(self, name):
 		return self.get_level(name) == 0x04
 
 	def complete_level(self, name):

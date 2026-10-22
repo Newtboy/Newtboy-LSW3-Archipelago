@@ -1,6 +1,8 @@
-from rule_builder.rules import Has, HasAllCounts, True_, Rule
+from BaseClasses import ItemClassification
+from rule_builder.rules import Has, HasAllCounts, True_, Rule, CanReachLocation
 import worlds.lsw3
 from rule_builder.rules import Has, HasFromListUnique
+from . import LSW3Location, Regions
 from .Locations import LEVEL_COMPLETION_LOCATION_IDS
 from .ship_regions import republic_ships
 from .character_regions import *
@@ -8,9 +10,7 @@ from .character_regions import *
 
 def set_rules(world: worlds.lsw3.LSW3World):
 	player = world.player
-	world.get_used_characters()
-
-	world.multiworld.completion_condition[world.player] = (lambda state: state.can_reach_location("Level Completed: ZB", world.player))
+	l = world.get_used_characters()
 
 	character_level_dict: dict[str, list] = {
 		"GA": [
@@ -33,7 +33,7 @@ def set_rules(world: worlds.lsw3.LSW3World):
 			],
 		"D3":  # Jedi Crash
 			[
-				"Ahsoka Tano",
+				"Ahsoka",
 				"Aayla Secura",
 				"Commander Bly",
 			],
@@ -249,18 +249,20 @@ def set_rules(world: worlds.lsw3.LSW3World):
 			"Progressive Grievous": 6,
 		}).resolve(world)
 
-	# CD and HC require any Republic ship, but only when ships
-	# are randomized and their unlock items are in the item pool.
+	# CD and HC require a Republic ship, but only when ships are randomized.
 	if world.options.randomize_ships.value:
 		republic_ship_rule = HasFromListUnique(*republic_ships, count=1)
 
+		player_locations = [
+			location.name
+			for location in world.multiworld.get_locations()
+			if location.player == player
+		]
+
 		for level_name in ("CD", "HC"):
 			location_name = f"Level Completed: {level_name}"
-			if location_name in LEVEL_COMPLETION_LOCATION_IDS:
-				location = world.multiworld.get_location(
-					location_name, player
-				)
-				location.access_rule = republic_ship_rule.resolve(world)
+			location = world.multiworld.get_location(location_name, player)
+			location.access_rule = republic_ship_rule.resolve(world)
 
 	if world.options.use_minikit_characters:
 		all_minikit_abilities = (
@@ -275,10 +277,24 @@ def set_rules(world: worlds.lsw3.LSW3World):
 			)
 			location.access_rule = all_minikit_abilities
 
-	if (world.options.use_brig_characters): # {
-		world.multiworld.get_location("Dr. Nuvo Vindi", player).access_rule = HasAllCounts({"Progressive Ventress": 2}).resolve(world)
-		world.multiworld.get_location("Wat Tambor", player).access_rule = HasAllCounts({"Progressive Ventress": 5}).resolve(world)
-		world.multiworld.get_location("Lok Durd", player).access_rule = HasAllCounts({"Progressive Dooku": 3}).resolve(world)
-		world.multiworld.get_location("Poggle the Lesser", player).access_rule = HasAllCounts({"Progressive Dooku": 5}).resolve(world)
-		world.multiworld.get_location("Nute Gunray", player).access_rule = True_().resolve(world) # Simply because it's a ground assault and there is no lock yet
-		world.multiworld.get_location("Whorm Loathsom", player).access_rule = True_().resolve(world) # Simply because it's a ground assault and there is no lock yet
+	if world.options.use_brig_characters:
+		if world.options.progressive_levels.value:
+			world.multiworld.get_location("Character Unlock: Dr. Nuvo Vindi", player).access_rule = HasAllCounts(
+				{"Progressive Ventress": 2}).resolve(world)
+			world.multiworld.get_location("Character Unlock: Wat Tambor", player).access_rule = HasAllCounts(
+				{"Progressive Ventress": 5}).resolve(world)
+			world.multiworld.get_location("Character Unlock: Lok Durd", player).access_rule = HasAllCounts(
+				{"Progressive Dooku": 3}).resolve(world)
+			world.multiworld.get_location("Character Unlock: Poggle the Lesser", player).access_rule = HasAllCounts(
+				{"Progressive Dooku": 5}).resolve(world)
+		else:
+			world.multiworld.get_location("Character Unlock: Dr. Nuvo Vindi", player).access_rule = True_().resolve(
+				world)
+			world.multiworld.get_location("Character Unlock: Wat Tambor", player).access_rule = True_().resolve(world)
+			world.multiworld.get_location("Character Unlock: Lok Durd", player).access_rule = True_().resolve(world)
+			world.multiworld.get_location("Character Unlock: Poggle the Lesser", player).access_rule = True_().resolve(
+				world)
+
+		# Ground assaults; no lock implemented yet.
+		world.multiworld.get_location("Character Unlock: Nute Gunray", player).access_rule = True_().resolve(world)
+		world.multiworld.get_location("Character Unlock: Whorm Loathsom", player).access_rule = True_().resolve(world)

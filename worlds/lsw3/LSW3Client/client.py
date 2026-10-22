@@ -255,6 +255,14 @@ class LSW3Context(CommonContext):
 			if location_name not in worlds.lsw3.LEVEL_COMPLETION_LOCATION_IDS:
 				continue
 
+			if level_name == "ZB" and self.game_memory.level_completed("ZB"):
+				if not self.goal_sent:
+					await self.send_msgs([{
+						"cmd": "StatusUpdate",
+						"status": 30
+					}])
+					self.goal_sent = True
+
 			cList = []
 
 			match level_name:
@@ -356,7 +364,7 @@ class LSW3Context(CommonContext):
 					]
 
 			state = self.level_state[level_name]
-			is_unlocked = self.game_memory.level_unlocked(level_name)
+			is_unlocked = self.game_memory.level_completed(level_name)
 
 			if level_name in self.game_memory.NON_LOCKABLE_LEVELS:
 				if is_unlocked and not state["location_checked"]:
@@ -400,7 +408,7 @@ class LSW3Context(CommonContext):
 				}])
 
 			if state["ap_received"] and state["location_checked"]:
-				if not self.game_memory.level_unlocked(level_name):
+				if not self.game_memory.level_completed(level_name):
 					self.game_memory.complete_level(level_name)
 
 			elif is_unlocked:
@@ -643,18 +651,18 @@ class LSW3Context(CommonContext):
 				self.game_memory.lock_red_brick_unlock_flag(brick_number)
 
 		# Goal check
-		if (
-				not self.goal_sent
-				and all(
-			self.game_memory.red_brick_unlocked(brick_number)
-			for brick_number in self.randomized_red_bricks
-		)
-		):
-			await self.send_msgs([{
-				"cmd": "StatusUpdate",
-				"status": 30,
-			}])
-			self.goal_sent = True
+		# if (
+		# 		not self.goal_sent
+		# 		and all(
+		# 	self.game_memory.red_brick_unlocked(brick_number)
+		# 	for brick_number in self.randomized_red_bricks
+		# )
+		# ):
+		# 	await self.send_msgs([{
+		# 		"cmd": "StatusUpdate",
+		# 		"status": 30,
+		# 	}])
+		# 	self.goal_sent = True
 
 	async def red_brick_collected(self, brick_number):
 		name = f"Red Brick {brick_number}"

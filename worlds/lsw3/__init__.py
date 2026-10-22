@@ -3,6 +3,7 @@ import sys
 
 # pyrefly: ignore [missing-import]
 from BaseClasses import Region, ItemClassification
+from rule_builder.rules import HasAllCounts
 # pyrefly: ignore [missing-import]
 from worlds.AutoWorld import World
 
@@ -327,18 +328,16 @@ class LSW3World(World):
 				)
 			)
 
-		if (self.options.progressive_levels.value): # {
-			for name, location_id in LEVEL_COMPLETION_LOCATION_IDS.items(): # {
-				menu.locations.append(
-					LSW3Location(
-						self.player,
-						name,
-						location_id,
-						menu,
-					)
+		# Level completion locations
+		for name, location_id in LEVEL_COMPLETION_LOCATION_IDS.items():
+			menu.locations.append(
+				LSW3Location(
+					self.player,
+					name,
+					location_id,
+					menu,
 				)
-			# }
-		# }
+			)
 
 
 		used_characters = self.get_used_characters()
@@ -554,9 +553,20 @@ class LSW3World(World):
 
 	def set_rules(self):
 		from .Rules import set_rules
-		self.multiworld.completion_condition[self.player] = lambda state: all(
-			state.has("Level Completed: ZB", self.player)
-		)
+
+		if self.options.progressive_levels.value:
+			self.multiworld.completion_condition[self.player] = (
+				lambda state: state.has("Progressive Ventress", self.player, 6)
+							  and state.has("Progressive Grievous", self.player, 6)
+							  and state.has("Progressive Dooku", self.player, 6)
+			)
+		else:
+			self.multiworld.completion_condition[self.player] = (
+				lambda state: all(
+					state.has(item, self.player)
+					for item in self.randomized_red_bricks
+				)
+			)
 		set_rules(self)
 
 	def generate_basic(self):
