@@ -42,8 +42,8 @@ class RandomizeShips(Toggle):
     display_name = "Randomize Ships?"
 
 class ProgressiveLevels(Toggle): # {
-    """DO NOT USE DO NOT USE"""
-    display_name = "DO NOT USE DO NOT USE"
+    """Progressive items for each path"""
+    display_name = "Progressive Level Unlocks"
     
 @dataclass
 class LSW3Options(PerGameCommonOptions):
