@@ -5,6 +5,7 @@ import warnings
 
 import worlds.lsw3
 import worlds.lsw3.LSW3Client.lsw3_data_pointers
+from worlds.lsw3 import LEVEL_COMPLETION_LOCATION_IDS
 
 warnings.filterwarnings(
 	"ignore",
@@ -87,7 +88,6 @@ class LSW3Context(CommonContext):
 
 		self.stud_locations_checked = set()
 
-
 		self.hub_characters = hub_characters
 		self.minikit_characters = minikit_characters
 		self.brig_characters = brig_characters
@@ -117,6 +117,15 @@ class LSW3Context(CommonContext):
 		self.character_state = {}
 
 		self.ship_state = {}
+
+		wallet_caps = [
+			10_000,
+			100_000,
+			1_000_000,
+			10_000_000,
+			100_000_000,
+			999999999999999999999999999999999999999999999999999999999999999999999999999999,
+		]
 
 		self.goal_sent = False
 
@@ -174,9 +183,9 @@ class LSW3Context(CommonContext):
 		import dolphin_memory_engine as dme
 
 		if dme.get_status() == dme.get_status().unHooked:
-			ConnectionResetError("Make sure dolphin is running.")
+			raise ConnectionResetError("Make sure dolphin is running.")
 
-		if self.game_memory is None:
+		else:
 			print("Connecting to Dolphin...")
 
 			try:
@@ -245,7 +254,7 @@ class LSW3Context(CommonContext):
 	async def check_connection(self):
 		import dolphin_memory_engine as dme
 		if dme.get_status() == dme.get_status().unHooked:
-			ConnectionResetError("Make sure dolphin is running.")
+			raise ConnectionResetError("Make sure dolphin is running.")
 			sys.exit()
 
 	async def check_levels(self):
@@ -681,10 +690,11 @@ class LSW3Context(CommonContext):
 		}])
 
 	# TALK to me, server
-	def on_package(self, cmd: str, args: dict[str, dict[str,str]]):
+	def on_package(self, cmd: str, args: dict):
 		import dolphin_memory_engine as dme
+
 		if dme.get_status() == dme.get_status().unHooked or not dme.is_hooked():
-			ConnectionResetError("Make sure dolphin is running.")
+			raise ConnectionResetError("Make sure Dolphin is running.")
 
 		if cmd == "Connected":
 			self.randomized_red_bricks = set(
@@ -693,18 +703,52 @@ class LSW3Context(CommonContext):
 
 			self.haveWallets = args["slot_data"]["haveWallets"]
 			self.progressiveLevels = args["slot_data"]["progressiveLevels"]
+
 			self.nonrandomized_red_bricks = (
-					set(range(1, 19))
-					- self.randomized_red_bricks
+					set(range(1, 19)) - self.randomized_red_bricks
 			)
 
-		if cmd == "ReceivedItems":
+			# Restore ALL previously checked locations.
+			self.sync_checked_locations(args.get("checked_locations", []))
+
+
+		elif cmd == "ReceivedItems":
 			for item in args["items"]:
 				asyncio.create_task(
 					self.handle_received_item(item)
 				)
 
+
 		super().on_package(cmd, args)
+
+	def sync_checked_locations(self, locations):
+		locations = set(locations)
+
+		# Levels
+		for level_name, location_id in LEVEL_COMPLETION_LOCATION_IDS.items():
+			if location_id in locations:
+				self.level_state[level_name]["location_checked"] = True
+
+		# Characters
+		for character, location_id in CHARACTER_LOCATION_IDS.items():
+			if location_id in locations:
+				character_name = character.removeprefix("Character Unlock: ")
+				if character_name in self.character_state:
+					self.character_state[character_name]["location_checked"] = True
+
+		# Ships
+		for ship, location_id in SHIP_LOCATION_IDS.items():
+			if location_id in locations:
+				ship_name = ship.removeprefix("Ship Unlock: ")
+				if ship_name in self.ship_state:
+					self.ship_state[ship_name]["location_checked"] = True
+
+		# Studs
+		for threshold in [10_000, 100_000, 1_000_000, 10_000_000, 100_000_000]:
+			location_id = STUD_LOCATION_IDS[f"{threshold} Studs"]
+			if location_id in locations:
+				self.stud_locations_checked.add(threshold)
+
 
 	async def handle_received_item(self, item):
 		if self.game_memory is None:
@@ -729,17 +773,8 @@ class LSW3Context(CommonContext):
 		if item.item == ITEM_PROGRESSIVE_WALLET:
 			self.wallet_level += 1
 
-			wallet_caps = [
-				10_000,
-				100_000,
-				1_000_000,
-				10_000_000,
-				100_000_000,
-				999999999999999999999999999999999999999,
-			]
-
-			self.wallet_cap = wallet_caps[
-				min(self.wallet_level, len(wallet_caps) - 1)
+			self.wallet_cap = self.wallet_caps[
+				min(self.wallet_level, len(self.wallet_caps) - 1)
 			]
 			return
 		# }
