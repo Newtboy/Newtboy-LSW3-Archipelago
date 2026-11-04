@@ -43,6 +43,7 @@ hub_characters = {
 	"Senate Commando",
 	"Gamorrean Guard",
 	"General Grievous",
+	"Asajj Ventress"
 }
 
 level_unlock_characters = {
@@ -193,7 +194,7 @@ grappling_hook = {
 	"Fives",
 	"Cad Bane",
 	"Aurra Sing",
-	"Robonino",
+	"Robonio",
 	"Shahan Alama",
 	"HELIOS-3D",
 	"IG-86",
@@ -258,7 +259,7 @@ high_jump = {
 short = {
 	"Yoda",
 	"Wag Too",
-	"Robonino",
+	"Robonio",
 	"Tee Watt Kaa"
 }
 commander = {
@@ -296,7 +297,7 @@ clone = {
 bounty_hunter = {
 	"Cad Bane",
 	"Aurra Sing",
-	"Robonino",
+	"Robonio",
 	"Shahan Alama",
 	"HELIOS-3D",
 	"IG-86",
@@ -312,7 +313,7 @@ silver_destroyer = {
 	"Echo",
 	"Cad Bane",
 	"Aurra Sing",
-	"Robonino",
+	"Robonio",
 	"Shahan Alama",
 	"HELIOS-3D",
 	"IG-86",
@@ -331,7 +332,7 @@ target = {
 	"Commander Cody",
 }
 electric_panels = {
-	"Robonino",
+	"Robonio",
 	"MagnaGuard"
 }
 sniper = {

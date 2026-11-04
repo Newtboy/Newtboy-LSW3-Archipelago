@@ -1,6 +1,7 @@
 # pyrefly: ignore-errors [unknown-name]
 import sys
 
+import worlds.lsw3.Regions
 # pyrefly: ignore [missing-import]
 from BaseClasses import Region, ItemClassification
 from rule_builder.rules import HasAllCounts
@@ -299,75 +300,19 @@ class LSW3World(World):
 		**LEVEL_COMPLETION_LOCATION_IDS,
 	}
 
+	def get_filler_item_name(self) -> str:
+		return self.random.choice([
+			"10 Studs",
+			"100 Studs",
+			"1000 Studs",
+			"10000 Studs",
+			"Asthmatic Robot",
+			"Roger Roger",
+			"Jedi Scum!",
+		])
+
 	def create_regions(self):
-		menu = Region(
-			"Menu",
-			self.player,
-			self.multiworld,
-		)
-
-		self.multiworld.regions.append(menu)
-
-		for name, location_id in RED_BRICK_LOCATION_IDS.items():
-			menu.locations.append(
-				LSW3Location(
-					self.player,
-					name,
-					location_id,
-					menu,
-				)
-			)
-
-		for name, location_id in STUD_LOCATION_IDS.items():
-			menu.locations.append(
-				LSW3Location(
-					self.player,
-					name,
-					location_id,
-					menu,
-				)
-			)
-
-		# Level completion locations
-		for name, location_id in LEVEL_COMPLETION_LOCATION_IDS.items():
-			menu.locations.append(
-				LSW3Location(
-					self.player,
-					name,
-					location_id,
-					menu,
-				)
-			)
-
-
-		used_characters = self.get_used_characters()
-
-		for location_name, location_id in CHARACTER_LOCATION_IDS.items():
-			character_name = location_name.removeprefix("Character Unlock: ")
-
-			if character_name in used_characters:
-				menu.locations.append(
-					LSW3Location(
-						self.player,
-						location_name,
-						location_id,
-						menu,
-					)
-				)
-
-		if (self.options.randomize_ships.value): # {
-			for name, location_id in SHIP_LOCATION_IDS.items():
-				menu.locations.append(
-					LSW3Location(
-						self.player,
-						name,
-						location_id,
-						menu,
-					)
-				)
-			# }
-		# }
-	# }
+		worlds.lsw3.Regions.create_regions(self)
 
 
 	def create_items(self):
@@ -375,7 +320,7 @@ class LSW3World(World):
 
 		# Red Bricks
 		self.randomized_red_bricks = self.random.sample(
-			list(RED_BRICK_ITEM_IDS.keys()),
+			sorted(RED_BRICK_ITEM_IDS.keys()),
 			red_brick_count,
 		)
 
@@ -407,7 +352,7 @@ class LSW3World(World):
 		guaranteed_characters = set()
 
 		for category in character_categories:
-			available = list(category & eligible_characters)
+			available = sorted(category & eligible_characters)
 
 			if available:
 				guaranteed_characters.add(self.random.choice(available))
@@ -423,11 +368,11 @@ class LSW3World(World):
 		character_count = max(character_count, len(guaranteed_characters))
 
 		# Fill the remaining slots randomly without duplicates.
-		remaining_characters = list(
+		remaining_characters = sorted(
 			eligible_characters - guaranteed_characters
 		)
 
-		self.randomized_characters = list(guaranteed_characters)
+		self.randomized_characters = sorted(guaranteed_characters)
 		self.randomized_characters.extend(
 			self.random.sample(
 				remaining_characters,

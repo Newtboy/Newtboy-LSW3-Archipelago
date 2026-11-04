@@ -1,3 +1,4 @@
+import BaseClasses
 import worlds.lsw3
 from BaseClasses import MultiWorld, Region, Entrance, Location, ItemClassification
 from .Locations import LSW3Location, ALL_LOCATION_TABLE, BASE_ID, studCheckLevels
@@ -77,7 +78,7 @@ res_landing_bay = [
 	"Red Brick Location 7"
 ] + [
 	f"Ship Unlock: {item}"
-	for item in worlds.lsw3.republic_ships
+	for item in republic_ships
 ]
 hand_main = [
 	"Character Unlock: Battle Droid",
@@ -87,7 +88,7 @@ hand_main = [
 	"Character Unlock: Super Battle Droid",
 ] + [
 	f"Ship Unlock: {item}"
-	for item in worlds.lsw3.separatist_ships
+	for item in separatist_ships
 ]
 hand_main_left = [ # L/R Exists for the red bricks
 	"Red Brick Location 16"
@@ -225,7 +226,7 @@ def create_regions(world):
 	has_tx20 = HasFromListUnique(*av_tx20, count=1)
 
 	has_republic_ship = HasFromListUnique(*republic_ships, count=1)
-	has_separatist_ship = HasFromListUnique(*worlds.lsw3.separatist_ships, count=1)
+	has_separatist_ship = HasFromListUnique(*separatist_ships, count=1)
 
 	using_wallets = world.options.progressive_wallets.value
 	using_ships = world.options.randomize_ships.value
@@ -263,12 +264,12 @@ def create_regions(world):
 	if world.options.randomize_ships.value:
 		res_to_space.access_rule = lambda state: any(
 			state.has(ship, player)
-			for ship in worlds.lsw3.republic_ships
+			for ship in republic_ships
 		)
 
 		hand_to_space.access_rule = lambda state: any(
 			state.has(ship, player)
-			for ship in worlds.lsw3.separatist_ships
+			for ship in separatist_ships
 		)
 
 	# Returning from space is always allowed.
@@ -291,7 +292,7 @@ def create_regions(world):
 		for location_name in location_names:
 			location_id = ALL_LOCATION_TABLE[location_name]
 
-			region.locations.append(LSW3Location(player, location_name, BASE_ID + location_id, region))
+			region.locations.append(LSW3Location(player, location_name, location_id, region))
 
 def connect_bidirectional(multiworld, player, a, b, rule=None, return_rule=None):
 	if (return_rule == "\\"): # {

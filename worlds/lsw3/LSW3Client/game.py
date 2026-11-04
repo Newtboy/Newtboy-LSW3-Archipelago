@@ -69,6 +69,9 @@ class LSW3Memory:
 			value.to_bytes(8, byteorder="big", signed=False)
 		)
 
+	def add_gold_brick(self):
+		self.write_u8(self.GOLD_BRICKS, self.read_u8(self.GOLD_BRICKS) + 1)
+
 	@property
 	def studs(self):
 		return self.read_u64(self.STUDS)
@@ -195,13 +198,14 @@ class LSW3Memory:
 	def reset_managed_state(self):
 		"""Set all to 0"""
 		# Red Bricks
-		self.red_bricks_1_8 = 0
-		self.red_bricks_9_16 = 0
-		self.red_bricks_17_18 = 0
-
-		self.red_brick_1_8_count = 0
-		self.red_brick_9_16_count = 0
-		self.red_brick_17_18_count = 0
+		## NOTE: THESE ARE INTENTIONALLY COMMENTED OUT
+		# self.red_bricks_1_8 = 0
+		# self.red_bricks_9_16 = 0
+		# self.red_bricks_17_18 = 0
+		#
+		# self.red_brick_1_8_count = 0
+		# self.red_brick_9_16_count = 0
+		# self.red_brick_17_18_count = 0
 
 		# Gold Bricks
 		self.gold_bricks = 0
@@ -247,8 +251,6 @@ class LSW3Memory:
 		flags |= bit
 
 		self.write_u8(flags_address, flags)
-
-
 
 		return True
 

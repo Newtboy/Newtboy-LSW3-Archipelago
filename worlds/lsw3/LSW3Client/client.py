@@ -99,6 +99,8 @@ class LSW3Context(CommonContext):
 
 		self.randomized_red_bricks = set()
 		self.nonrandomized_red_bricks = set()
+		self.game_watcher_task = None
+		self.level_checker_task = None
 
 		self.red_brick_state = {
 			brick_number: {
@@ -118,7 +120,7 @@ class LSW3Context(CommonContext):
 
 		self.ship_state = {}
 
-		wallet_caps = [
+		self.wallet_caps = [
 			10_000,
 			100_000,
 			1_000_000,
@@ -182,9 +184,11 @@ class LSW3Context(CommonContext):
 		await super().server_auth(password_requested)
 		import dolphin_memory_engine as dme
 
-		if dme.get_status() == dme.get_status().unHooked:
-			raise ConnectionResetError("Make sure dolphin is running.")
+		if not dme.is_hooked():
+			dme.hook()
 
+		if not dme.is_hooked():
+			raise ConnectionResetError("Make sure Dolphin is running.")
 		else:
 			print("Connecting to Dolphin...")
 
@@ -216,9 +220,15 @@ class LSW3Context(CommonContext):
 					for level in self.game_memory.LEVELS
 				}
 
-				if ((self.progressiveLevels)): # {
-					asyncio.create_task(self.level_checker())
-				asyncio.create_task(self.game_watcher())
+				if (self.game_watcher_task is None or self.game_watcher_task.done()):
+					self.game_watcher_task = asyncio.create_task(
+						self.game_watcher()
+					)
+
+				if self.progressiveLevels and (self.level_checker_task is None or self.level_checker_task.done()):
+					self.level_checker_task = asyncio.create_task(
+						self.level_checker()
+					)
 
 			except RuntimeError as e:
 				print(f"WARNING: {e}")
@@ -297,7 +307,7 @@ class LSW3Context(CommonContext):
 					]
 				case "D3":  # Jedi Crash
 					cList = [
-						"Ahsoka Tano",
+						"Ahsoka",
 						"Aayla Secura",
 						"Commander Bly",
 					]
@@ -635,7 +645,7 @@ class LSW3Context(CommonContext):
 
 	# Red Brick Stuff
 	async def check_red_bricks(self):
-		for brick_number in range(1, 19):
+		for brick_number in self.randomized_red_bricks:
 			state = self.red_brick_state[brick_number]
 
 			ap_received = state["ap_received"]
@@ -658,20 +668,17 @@ class LSW3Context(CommonContext):
 			# Prevent natural unlocks from bypassing AP.
 			elif self.game_memory.red_brick_unlocked(brick_number):
 				self.game_memory.lock_red_brick_unlock_flag(brick_number)
-
-		# Goal check
-		# if (
-		# 		not self.goal_sent
-		# 		and all(
-		# 	self.game_memory.red_brick_unlocked(brick_number)
-		# 	for brick_number in self.randomized_red_bricks
-		# )
-		# ):
-		# 	await self.send_msgs([{
-		# 		"cmd": "StatusUpdate",
-		# 		"status": 30,
-		# 	}])
-		# 	self.goal_sent = True
+			pass
+		# }
+		pass # Hand guide the fucking interpreter
+		if (not self.goal_sent and all(self.game_memory.red_brick_unlocked(brick_number)
+			for brick_number in self.randomized_red_bricks) and
+				(self.game_memory.level_completed("ZB") if self.progressiveLevels else True)):
+			await self.send_msgs([{
+				"cmd": "StatusUpdate",
+				"status": 30,
+			}])
+			self.goal_sent = True
 
 	async def red_brick_collected(self, brick_number):
 		name = f"Red Brick {brick_number}"
@@ -726,6 +733,7 @@ class LSW3Context(CommonContext):
 
 		# Levels
 		for level_name, location_id in LEVEL_COMPLETION_LOCATION_IDS.items():
+			level_name = level_name.removeprefix("Level Completed: ")
 			if location_id in locations:
 				self.level_state[level_name]["location_checked"] = True
 

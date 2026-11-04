@@ -8,7 +8,7 @@ class RedBrickCount(Range):
 
     display_name = "Red Brick Count" # what shows in webhost or spoiler log
 
-    range_start = 0
+    range_start = 4
     range_end = 18
     default = 18
     

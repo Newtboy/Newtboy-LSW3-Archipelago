@@ -167,6 +167,10 @@ def set_rules(world: worlds.lsw3.LSW3World):
 			available &= attribute
 
 		return HasFromListUnique(*available, count=1)
+	# }
+	if (using_wallets): # {
+		for i, (locName, locID) in enumerate(worlds.lsw3.STUD_LOCATION_IDS): # {
+			world.get_location(locName).access_rule = HasAllCounts({"Progressive Wallet" : i}).resolve(world)
 
 	# Red bricks
 	set_brick_rule(1, has_silver_br & (HasAllCounts({"Progressive Wallet": 1}) if using_wallets else True_()))
@@ -179,8 +183,7 @@ def set_rules(world: worlds.lsw3.LSW3World):
 	set_brick_rule(8, has_force & (HasAllCounts({"Progressive Wallet": 3}) if using_wallets else True_()))
 	set_brick_rule(9, has_force & has_grappler & (HasAllCounts({"Progressive Wallet": 3}) if using_wallets else True_()))
 	set_brick_rule(10, has_silver_br & (HasAllCounts({"Progressive Wallet": 4}) if using_wallets else True_()) & (has_republic_ship if using_ships else True_()))
-	set_brick_rule(11, has_dark_force & (has_character_with(available_sith, av_silver_br) | has_character_with(av_silver_br) & Has("Red Brick 2")) & (HasAllCounts({"Progressive Wallet": 4}) if using_wallets else True_()))
-	#set_brick_rule(11, True_())
+	set_brick_rule(11, has_dark_force & ((has_character_with(available_sith) & has_character_with(av_silver_br)) | (has_character_with(av_silver_br) & Has("Red Brick 2"))) & (HasAllCounts({"Progressive Wallet": 4}) if using_wallets else True_()))
 	set_brick_rule(12, has_grappler & has_gold_br & has_force & (HasAllCounts({"Progressive Wallet": 2}) if using_wallets else True_()))
 	set_brick_rule(13, has_bounty_hunter & (HasAllCounts({"Progressive Wallet": 2}) if using_wallets else True_()) & (has_republic_ship if using_ships else True_()))
 	set_brick_rule(14, (has_character_with(available_sith) | Has("Red Brick 2")) & has_character_with(av_electric, av_tx20) & has_bounty_hunter) #sith, electric panels, tx-20 panels, bounty hunter though the cells DO stay unlocked so that's something
@@ -263,6 +266,69 @@ def set_rules(world: worlds.lsw3.LSW3World):
 			location_name = f"Level Completed: {level_name}"
 			location = world.multiworld.get_location(location_name, player)
 			location.access_rule = republic_ship_rule.resolve(world)
+		world.multiworld.get_location("Y-Wing Starfighter", player).access_rule = HasAllCounts({"Progressive Grievous": 1}).resolve(world)
+		world.multiworld.get_location("Anakin's Jedi Starfighter", player).access_rule = (HasAllCounts(
+			{"Progressive Grievous": 1}) or HasAllCounts({"Progressive Ventress": 3})).resolve(world)
+		world.multiworld.get_location("Plo Koon's Jedi Starfighter", player).access_rule = HasAllCounts(
+			{"Progressive Grievous": 1}).resolve(world)
+		world.multiworld.get_location("Obi-Wan's Jedi Starfighter", player).access_rule = (
+			True_().resolve(world)) # GA always accessible
+		world.multiworld.get_location("Republic Gunship", player).access_rule = HasAllCounts(
+			{"Progressive Dooku": 2}).resolve(world)
+		world.multiworld.get_location("Republic Dropship", player).access_rule = HasAllCounts(
+			{"Progressive Ventress": 5}).resolve(world)
+		world.multiworld.get_location("Medical Frigate", player).access_rule = HasAllCounts(
+			{"Progressive Grievous": 2}).resolve(world)
+		world.multiworld.get_location("Republic Attack Shuttle", player).access_rule = HasAllCounts(
+			{"Progressive Grievous": 3}).resolve(world)
+		world.multiworld.get_location("Republic Cruiser", player).access_rule = HasAllCounts(
+			{"Progressive Dooku": 2}).resolve(world)
+		world.multiworld.get_location("The Twilight", player).access_rule = HasAllCounts(
+			{"Progressive Dooku": 1}).resolve(world)
+		world.multiworld.get_location("H-type Nubian Yacht", player).access_rule = HasAllCounts(
+			{"Progressive Grievous": 2}).resolve(world)  # G3
+		world.multiworld.get_location("Jedi Shuttle", player).access_rule = HasAllCounts(
+			{"Progressive Grievous": 5}).resolve(world)  # G6
+		world.multiworld.get_location("ARC-170 Starfighter", player).access_rule = HasAllCounts(
+			{"Progressive Zillo Beast": 1}).resolve(world)  # ZB
+		world.multiworld.get_location("Stealth Ship", player).access_rule = HasAllCounts(
+			{"Gold Brick": 130}).resolve(world)
+
+		world.multiworld.get_location("Soulless One", player).access_rule = HasAllCounts(
+			{"Progressive Grievous": 5}).resolve(world)  # G6
+		world.multiworld.get_location("Geonosian Solar Sailor", player).access_rule = HasAllCounts(
+			{"Progressive Dooku": 5}).resolve(world)  # D6
+		world.multiworld.get_location("Hyena Bomber", player).access_rule = True_().resolve(world)  # GA
+		world.multiworld.get_location("Vulture Droid", player).access_rule = True_().resolve(world)  # GA
+
+		world.multiworld.get_location("Geonosian Starfighter", player).access_rule = HasAllCounts(
+			{"Poggle the Lesser": 1}).resolve(world)
+		world.multiworld.get_location("Neimoidian Shuttle", player).access_rule = HasAllCounts(
+			{"Nute Gunray": 1}).resolve(world)
+
+		world.multiworld.get_location("Pirate Saucer", player).access_rule = HasAllCounts(
+			{"Hondo Ohnaka": 1}).resolve(world)
+		world.multiworld.get_location("MagnaGuard Starfighter", player).access_rule = (
+			lambda state: state.can_reach(
+				"Level Completed: CD", "Location", player
+			)
+		)
+
+		world.multiworld.get_location("The Halo", player).access_rule = (
+			lambda state: state.can_reach(
+				"Level Completed: HC", "Location", player
+			)
+		)
+		world.multiworld.get_location("Xanadu Blood", player).access_rule = (
+			lambda state: state.can_reach(
+				"Level Completed: HC", "Location", player
+			)
+		)
+		world.multiworld.get_location("Trident Assault Craft", player).access_rule = HasAllCounts(
+			{"Progressive Ventress": 5}).resolve(world)  # V6
+		world.multiworld.get_location("Slave I", player).access_rule = HasAllCounts(
+			{"Jango Fett": 1}).resolve(world)
+
 
 	if world.options.use_minikit_characters:
 		all_minikit_abilities = (
