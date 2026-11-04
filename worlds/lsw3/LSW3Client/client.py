@@ -23,7 +23,6 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 
 import asyncio
-import logging
 
 fallback = True
 
@@ -232,7 +231,7 @@ class LSW3Context(CommonContext):
 
 			except RuntimeError as e:
 				print(f"WARNING: {e}")
-			except ConnectionResetError as e:
+			except ConnectionResetError:
 				print("Reboot dolphin.")
 
 		await self.get_username()
@@ -505,7 +504,6 @@ class LSW3Context(CommonContext):
 					if not location_checked:
 						await self.character_collected(character)
 						state["location_checked"] = True
-						location_checked = True
 
 					self.game_memory.lock_character(character)
 
@@ -681,8 +679,6 @@ class LSW3Context(CommonContext):
 			self.goal_sent = True
 
 	async def red_brick_collected(self, brick_number):
-		name = f"Red Brick {brick_number}"
-
 		# This brick is not randomized.
 		# Let the base game handle it normally.
 		if brick_number not in self.randomized_red_bricks:
@@ -795,29 +791,28 @@ class LSW3Context(CommonContext):
 
 		prefix = progressive_level_prefixes.get(item.item)
 
-		if prefix is not None:
-			for name in self.game_memory.LEVELS:
+		if (prefix is not None): # {
+			for name in self.game_memory.LEVELS: # {
 				state = self.level_state[name]
 
 				# An awarded level stays reserved even while it is locked.
 				# Do not use isCompleted() here: the level may intentionally
 				# remain locked until its location is checked.
-				if name.startswith(prefix) and not state["ap_received"]:
+				if (name.startswith(prefix) and not state["ap_received"]): # {
 					state["ap_received"] = True
-
 					# If its location was already checked, unlock immediately.
 					# Otherwise, check_levels() will unlock it when that happens.
-					if state["location_checked"]:
+					if (state["location_checked"]): # {
 						self.game_memory.complete_level(name)
-					else:
+					# }
+					else: # {
 						self.game_memory.lock_level(name)
-
-					print(f"Received progressive level item for: {name}")
+					# }
 					break
-			else:
-				print(f"All levels in the {prefix} sequence have been awarded!")
-
+				# }
+			# }
 			return
+		# }
 
 		# Gold Brick
 		if item.item == ITEM_GOLD_BRICK:
