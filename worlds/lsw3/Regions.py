@@ -289,7 +289,7 @@ def create_regions(world):
 	connect_bidirectional(multiworld, player, "hand_main", "hand_ground_vehicle_bay")
 	connect_bidirectional(multiworld, player, "hand_main_right", "hand_observation_deck")
 	connect_bidirectional(multiworld, player, "hand_main_left", "hand_bridge")
-	connect_bidirectional(multiworld, player, "hand_main_left", "hand_bounty_hunter",rule=(has_bounty_hunter).resolve(world))
+	connect_bidirectional(multiworld, player, "hand_main_left", "hand_bounty_hunter",rule=((has_bounty_hunter).resolve(world)))
 	connect_bidirectional(multiworld, player, "hand_bounty_hunter", "hand_gallery")
 
 	# Assign locations to areas
