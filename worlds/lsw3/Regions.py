@@ -14,7 +14,7 @@ res_main = [
 	"Character Unlock: Clone Pilot",
 	"Character Unlock: Onaconda Farr",
 	"Character Unlock: Senate Commando (Captain)",
-	"Red Brick Location 18"
+	"Red Brick Location 18",
 ] + [
 	f"Level Completed: {name}"
 	for name in LEVELS
@@ -22,6 +22,9 @@ res_main = [
 ] + [
 	f"{level} Studs"
 	for level in studCheckLevels
+] + [
+	f"Character Unlock: {character}"
+    for character in level_unlock_characters
 ]
 
 res_central = [
@@ -70,8 +73,9 @@ res_intersection = [
 res_ground_vehicle_bay = [
 	"Character Unlock: Lurmen Villager",
 	"Character Unlock: Senator Kharrus",
-	"Character Unlock: Tee Watt Kaa"
+	"Character Unlock: Tee Watt Kaa",
 	# The vehicles, obviously, and are NYI
+	"Character Unlock: Chancellor Palpatine"
 ]
 res_landing_bay = [
 	"Character Unlock: R4-P17",
@@ -102,8 +106,9 @@ hand_ground_vehicle_bay = [
 	"Character Unlock: LEP Servant Droid",
 	"Character Unlock: Neimoidian",
 	"Character Unlock: Undead Geonosian",
-	"Red Brick Location 4"
+	"Red Brick Location 4",
 	# Separatist ground vehicles
+	"Character Unlock: Grand Moff Tarkin"
 ]
 hand_observation_deck = [
 	"Character Unlock: Asajj Ventress",
@@ -125,7 +130,9 @@ hand_bounty_hunter = [
 	"Character Unlock: Pirate Ruffian",
 	"Character Unlock: Turk Falso",
 	"Level Completed: HC",
-	"Red Brick Location 13"
+	"Red Brick Location 13",
+	# IDK if he should go here but I think he does?
+	"Character Unlock: TX-20"
 ]
 hand_gallery = [
 	"Character Unlock: Probe Droid"
@@ -277,12 +284,12 @@ def create_regions(world):
 	connect_regions(multiworld, player, "space", "hand_main")
 
 	# Invisible Hand
-	connect_bidirectional(multiworld, player, "hand_main", "hand_main_left", rule=(has_force | has_electric), return_rule="\\")
-	connect_bidirectional(multiworld, player, "hand_main", "hand_main_right", rule=(has_force | has_astromech), return_rule="\\")
+	connect_bidirectional(multiworld, player, "hand_main", "hand_main_left", rule=(has_force | has_electric).resolve(world), return_rule="\\")
+	connect_bidirectional(multiworld, player, "hand_main", "hand_main_right", rule=(has_force | has_astromech).resolve(world), return_rule="\\")
 	connect_bidirectional(multiworld, player, "hand_main", "hand_ground_vehicle_bay")
 	connect_bidirectional(multiworld, player, "hand_main_right", "hand_observation_deck")
 	connect_bidirectional(multiworld, player, "hand_main_left", "hand_bridge")
-	connect_bidirectional(multiworld, player, "hand_main_left", "hand_bounty_hunter",rule=(has_bounty_hunter))
+	connect_bidirectional(multiworld, player, "hand_main_left", "hand_bounty_hunter",rule=(has_bounty_hunter).resolve(world))
 	connect_bidirectional(multiworld, player, "hand_bounty_hunter", "hand_gallery")
 
 	# Assign locations to areas
