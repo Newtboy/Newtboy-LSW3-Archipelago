@@ -186,7 +186,7 @@ def set_rules(world: worlds.lsw3.LSW3World):
 	set_brick_rule(11, has_dark_force & ((has_character_with(available_sith) & has_character_with(av_silver_br)) | (has_character_with(av_silver_br) & Has("Red Brick 2"))) & (HasAllCounts({"Progressive Wallet": 4}) if using_wallets else True_()))
 	set_brick_rule(12, has_grappler & has_gold_br & has_force & (HasAllCounts({"Progressive Wallet": 2}) if using_wallets else True_()))
 	set_brick_rule(13, has_bounty_hunter & (HasAllCounts({"Progressive Wallet": 2}) if using_wallets else True_()) & (has_republic_ship if using_ships else True_()))
-	set_brick_rule(14, (has_character_with(available_sith) | Has("Red Brick 2")) & has_character_with(av_electric, av_tx20) & has_bounty_hunter) #sith, electric panels, tx-20 panels, bounty hunter though the cells DO stay unlocked so that's something
+	set_brick_rule(14, ((has_character_with(available_sith) | Has("Red Brick 2"))& has_character_with(av_electric)& has_character_with(av_tx20)& has_bounty_hunter))
 	set_brick_rule(15, has_sniper & (HasAllCounts({"Progressive Wallet": 2}) if using_wallets else True_()))
 	set_brick_rule(16, (has_republic_ship if using_ships else True_()) & (HasAllCounts({"Progressive Wallet": 2}) if using_wallets else True_()))
 	set_brick_rule(17, HasAllCounts({"Progressive Wallet": 1}) if using_wallets else True_())
@@ -267,85 +267,127 @@ def set_rules(world: worlds.lsw3.LSW3World):
 			location = world.multiworld.get_location(location_name, player)
 			location.access_rule = republic_ship_rule.resolve(world)
 
-	world.multiworld.get_location("Ship Unlock: Y-Wing Starfighter", player).access_rule = HasAllCounts(
-		{"Progressive Grievous": 1}).resolve(world)
+	# Ship unlock requirements
+	if using_ships:
+		# Republic ships
+		world.multiworld.get_location("Ship Unlock: Y-Wing Starfighter", player).access_rule = (
+			HasAllCounts({"Progressive Grievous": 1}) if world.options.progressive_levels.value else True_()
+		).resolve(world)
 
-	world.multiworld.get_location("Ship Unlock: Anakin's Jedi Starfighter", player).access_rule = (
-			HasAllCounts({"Progressive Grievous": 1}) |
-			HasAllCounts({"Progressive Ventress": 3})
-	).resolve(world)
+		world.multiworld.get_location("Ship Unlock: Anakin's Jedi Starfighter", player).access_rule = (
+			(HasAllCounts({"Progressive Grievous": 1}) | HasAllCounts({"Progressive Ventress": 3}))
+			if world.options.progressive_levels.value else True_()
+		).resolve(world)
 
-	world.multiworld.get_location("Ship Unlock: Kit Fisto's Jedi Starfighter", player).access_rule = HasAllCounts(
-		{"Progressive Grievous": 3}).resolve(world)
-	world.multiworld.get_location("Ship Unlock: V-19 Torrent Starfighter", player).access_rule = HasAllCounts(
-		{"Progressive Ventress": 3}).resolve(world)
-	world.multiworld.get_location("Ship Unlock: Y-Wing Starfighter", player).access_rule = HasAllCounts(
-		{"Progressive Grievous": 1}).resolve(world)
+		world.multiworld.get_location("Ship Unlock: Kit Fisto's Jedi Starfighter", player).access_rule = (
+			HasAllCounts({"Progressive Grievous": 3}) if world.options.progressive_levels.value else True_()
+		).resolve(world)
 
-	world.multiworld.get_location("Ship Unlock: Plo Koon's Jedi Starfighter", player).access_rule = HasAllCounts(
-		{"Progressive Grievous": 1}).resolve(world)
-	world.multiworld.get_location("Ship Unlock: Obi-Wan's Jedi Starfighter", player).access_rule = (
-		True_().resolve(world))  # GA always accessible
-	world.multiworld.get_location("Ship Unlock: Republic Gunship", player).access_rule = HasAllCounts(
-		{"Progressive Dooku": 2}).resolve(world)
-	world.multiworld.get_location("Ship Unlock: Republic Dropship (Rapid Fire)", player).access_rule = HasAllCounts(
-		{"Progressive Ventress": 5}).resolve(world)
-	world.multiworld.get_location("Ship Unlock: Medical Frigate (Torpedoes)", player).access_rule = HasAllCounts(
-		{"Progressive Grievous": 2}).resolve(world)
-	world.multiworld.get_location("Ship Unlock: Republic Attack Shuttle", player).access_rule = HasAllCounts(
-		{"Progressive Grievous": 3}).resolve(world)
-	world.multiworld.get_location("Ship Unlock: Republic Cruiser (Missiles + Torpedoes)",
-	                              player).access_rule = HasAllCounts(
-		{"Progressive Dooku": 2}).resolve(world)
-	world.multiworld.get_location("Ship Unlock: The Twilight", player).access_rule = HasAllCounts(
-		{"Progressive Dooku": 1}).resolve(world)
-	world.multiworld.get_location("Ship Unlock: H-Type Nubian Yacht", player).access_rule = HasAllCounts(
-		{"Progressive Grievous": 2}).resolve(world)  # G3
-	world.multiworld.get_location("Ship Unlock: Jedi Shuttle", player).access_rule = HasAllCounts(
-		{"Progressive Grievous": 5}).resolve(world)  # G6
-	world.multiworld.get_location("Ship Unlock: ARC-170 Starfighter (Rapid Fire)", player).access_rule = HasAllCounts(
-		{"Progressive Grievous":6,"Progressive Dooku":6,"Progressive Ventress":6}).resolve(world)  # ZB
-	world.multiworld.get_location("Ship Unlock: Stealth Ship (Missiles + Torpedoes)",
-	                              player).access_rule = (HasAllCounts({"Progressive Grievous":6,"Progressive Dooku":6,"Progressive Ventress":6, "Red Brick 7":1,"Red Brick 8":1,"Red Brick 9":1,"Red Brick 10":1,"Red Brick 11":1})).resolve(world)
-	world.multiworld.get_location("Ship Unlock: Soulless One (Rapid Fire)", player).access_rule = HasAllCounts(
-		{"Progressive Grievous": 5}).resolve(world)  # G6
-	world.multiworld.get_location("Ship Unlock: Geonosian Solar Sailor", player).access_rule = HasAllCounts(
-		{"Progressive Dooku": 5}).resolve(world)  # D6
-	world.multiworld.get_location("Ship Unlock: Hyena Bomber", player).access_rule = True_().resolve(world)  # GA
-	world.multiworld.get_location("Ship Unlock: Vulture Droid", player).access_rule = True_().resolve(world)  # GA
-	world.multiworld.get_location("Ship Unlock: Geonosian Starfighter", player).access_rule = HasAllCounts(
-		{"Poggle the Lesser": 1}).resolve(world)
+		world.multiworld.get_location("Ship Unlock: V-19 Torrent Starfighter", player).access_rule = (
+			HasAllCounts({"Progressive Ventress": 3}) if world.options.progressive_levels.value else True_()
+		).resolve(world)
 
-	world.multiworld.get_location("Ship Unlock: Neimoidian Shuttle", player).access_rule = HasAllCounts(
-		{"Nute Gunray": 1}).resolve(world)
+		world.multiworld.get_location("Ship Unlock: Plo Koon's Jedi Starfighter", player).access_rule = (
+			HasAllCounts({"Progressive Grievous": 1}) if world.options.progressive_levels.value else True_()
+		).resolve(world)
 
-	world.multiworld.get_location("Ship Unlock: Pirate Saucer (Missiles)", player).access_rule = HasAllCounts(
-		{"Hondo Ohnaka": 1}).resolve(world)
+		world.multiworld.get_location("Ship Unlock: Obi-Wan's Jedi Starfighter", player).access_rule = True_().resolve(
+			world)
 
-	world.multiworld.get_location("Ship Unlock: MagnaGuard Starfighter", player).access_rule = (
-		lambda state: state.can_reach(
-			"Level Completed: CD", "Location", player
+		world.multiworld.get_location("Ship Unlock: Republic Gunship", player).access_rule = (
+			HasAllCounts({"Progressive Dooku": 2}) if world.options.progressive_levels.value else True_()
+		).resolve(world)
+
+		world.multiworld.get_location("Ship Unlock: Republic Dropship (Rapid Fire)", player).access_rule = (
+			HasAllCounts({"Progressive Ventress": 5}) if world.options.progressive_levels.value else True_()
+		).resolve(world)
+
+		world.multiworld.get_location("Ship Unlock: Medical Frigate (Torpedoes)", player).access_rule = (
+			HasAllCounts({"Progressive Grievous": 2}) if world.options.progressive_levels.value else True_()
+		).resolve(world)
+
+		world.multiworld.get_location("Ship Unlock: Republic Attack Shuttle", player).access_rule = (
+			HasAllCounts({"Progressive Grievous": 3}) if world.options.progressive_levels.value else True_()
+		).resolve(world)
+
+		world.multiworld.get_location("Ship Unlock: Republic Cruiser (Missiles + Torpedoes)", player).access_rule = (
+			HasAllCounts({"Progressive Dooku": 2}) if world.options.progressive_levels.value else True_()
+		).resolve(world)
+
+		world.multiworld.get_location("Ship Unlock: The Twilight", player).access_rule = (
+			HasAllCounts({"Progressive Dooku": 1}) if world.options.progressive_levels.value else True_()
+		).resolve(world)
+
+		world.multiworld.get_location("Ship Unlock: H-Type Nubian Yacht", player).access_rule = (
+			HasAllCounts({"Progressive Grievous": 2}) if world.options.progressive_levels.value else True_()
+		).resolve(world)
+
+		world.multiworld.get_location("Ship Unlock: Jedi Shuttle", player).access_rule = (
+			HasAllCounts({"Progressive Grievous": 5}) if world.options.progressive_levels.value else True_()
+		).resolve(world)
+
+		world.multiworld.get_location("Ship Unlock: ARC-170 Starfighter (Rapid Fire)", player).access_rule = (
+			HasAllCounts({
+				"Progressive Grievous": 6,
+				"Progressive Dooku": 6,
+				"Progressive Ventress": 6
+			}) if world.options.progressive_levels.value else True_()
+		).resolve(world)
+
+		world.multiworld.get_location("Ship Unlock: Stealth Ship (Missiles + Torpedoes)", player).access_rule = (
+			HasAllCounts({
+				"Progressive Grievous": 6,
+				"Progressive Dooku": 6,
+				"Progressive Ventress": 6
+			}) if world.options.progressive_levels.value else True_()
+		).resolve(world)
+
+		# Separatist ships
+		world.multiworld.get_location("Ship Unlock: Soulless One (Rapid Fire)", player).access_rule = (
+			HasAllCounts({"Progressive Grievous": 5}) if world.options.progressive_levels.value else True_()
+		).resolve(world)
+
+		world.multiworld.get_location("Ship Unlock: Geonosian Solar Sailor", player).access_rule = (
+			HasAllCounts({"Progressive Dooku": 5}) if world.options.progressive_levels.value else True_()
+		).resolve(world)
+
+		world.multiworld.get_location("Ship Unlock: Hyena Bomber", player).access_rule = True_().resolve(world)
+		world.multiworld.get_location("Ship Unlock: Vulture Droid", player).access_rule = True_().resolve(world)
+
+		# Brig-character ships
+		if world.options.use_brig_characters.value:
+			world.multiworld.get_location("Ship Unlock: Geonosian Starfighter", player).access_rule = (
+				HasAllCounts({"Poggle the Lesser": 1})
+			).resolve(world)
+
+			world.multiworld.get_location("Ship Unlock: Neimoidian Shuttle", player).access_rule = (
+				HasAllCounts({"Nute Gunray": 1})
+			).resolve(world)
+
+		world.multiworld.get_location("Ship Unlock: Pirate Saucer (Missiles)", player).access_rule = (
+			HasAllCounts({"Hondo Ohnaka": 1})
+		).resolve(world)
+
+		world.multiworld.get_location("Ship Unlock: MagnaGuard Starfighter", player).access_rule = (
+			lambda state: state.can_reach("Level Completed: CD", "Location", player)
 		)
-	)
 
-	world.multiworld.get_location("Ship Unlock: The Halo (Rapid Fire)", player).access_rule = (
-		lambda state: state.can_reach(
-			"Level Completed: HC", "Location", player
+		world.multiworld.get_location("Ship Unlock: The Halo (Rapid Fire)", player).access_rule = (
+			lambda state: state.can_reach("Level Completed: HC", "Location", player)
 		)
-	)
 
-	world.multiworld.get_location("Ship Unlock: Xanadu Blood (Rapid Fire)", player).access_rule = (
-		lambda state: state.can_reach(
-			"Level Completed: HC", "Location", player
+		world.multiworld.get_location("Ship Unlock: Xanadu Blood (Rapid Fire)", player).access_rule = (
+			lambda state: state.can_reach("Level Completed: HC", "Location", player)
 		)
-	)
 
-	world.multiworld.get_location("Ship Unlock: Trident Assault Craft (Missiles + Torpedoes)",
-	                              player).access_rule = HasAllCounts(
-		{"Progressive Ventress": 5}).resolve(world)  # V6
+		world.multiworld.get_location("Ship Unlock: Trident Assault Craft (Missiles + Torpedoes)",
+		                              player).access_rule = (
+			HasAllCounts({"Progressive Ventress": 5}) if world.options.progressive_levels.value else True_()
+		).resolve(world)
 
-	world.multiworld.get_location("Ship Unlock: Slave I", player).access_rule = HasAllCounts(
-		{"Jango Fett": 1}).resolve(world)
+		world.multiworld.get_location("Ship Unlock: Slave I", player).access_rule = (
+			HasAllCounts({"Jango Fett": 1})
+		).resolve(world)
 
 
 	if world.options.use_minikit_characters:

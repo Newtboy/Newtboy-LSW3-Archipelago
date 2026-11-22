@@ -192,6 +192,31 @@ def create_regions(world):
 
 	used_characters = world.get_used_characters()
 
+	# Filter ship locations based on options.
+	active_regions = regions.copy()
+
+	if not world.options.randomize_ships.value:
+		active_regions["res_landing_bay"] = [
+			name for name in active_regions["res_landing_bay"]
+			if not name.startswith("Ship Unlock:")
+		]
+
+		active_regions["hand_main"] = [
+			name for name in active_regions["hand_main"]
+			if not name.startswith("Ship Unlock:")
+		]
+
+	elif not world.options.use_brig_characters.value:
+		excluded_ships = {
+			"Ship Unlock: Geonosian Starfighter",
+			"Ship Unlock: Neimoidian Shuttle",
+		}
+
+		active_regions["hand_main"] = [
+			name for name in active_regions["hand_main"]
+			if name not in excluded_ships
+		]
+
 	# Only characters that can appear in this world
 	available_jedi = jedi & used_characters
 	available_sith = sith & used_characters
@@ -293,13 +318,15 @@ def create_regions(world):
 	connect_bidirectional(multiworld, player, "hand_bounty_hunter", "hand_gallery")
 
 	# Assign locations to areas
-	for area_name, location_names in regions.items():
+	for area_name, location_names in active_regions.items():
 		region = multiworld.get_region(area_name, player)
 
 		for location_name in location_names:
 			location_id = ALL_LOCATION_TABLE[location_name]
 
-			region.locations.append(LSW3Location(player, location_name, location_id, region))
+			region.locations.append(
+				LSW3Location(player, location_name, location_id, region)
+			)
 
 def connect_bidirectional(multiworld, player, a, b, rule=None, return_rule=None):
 	if (return_rule == "\\"): # {

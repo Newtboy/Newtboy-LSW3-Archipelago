@@ -5,7 +5,7 @@ import warnings
 
 import worlds.lsw3
 import worlds.lsw3.LSW3Client.lsw3_data_pointers
-from worlds.lsw3 import LEVEL_COMPLETION_LOCATION_IDS
+from worlds.lsw3.Locations import LEVEL_COMPLETION_LOCATION_IDS
 
 warnings.filterwarnings(
 	"ignore",

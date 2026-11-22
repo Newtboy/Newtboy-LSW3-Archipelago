@@ -1,13 +1,13 @@
 # pyrefly: ignore-errors [unknown-name]
 import sys
 
+import Options
 import worlds.lsw3.Regions
 # pyrefly: ignore [missing-import]
-from BaseClasses import Region, ItemClassification
-from rule_builder.rules import HasAllCounts
+from BaseClasses import ItemClassification
 # pyrefly: ignore [missing-import]
 from worlds.AutoWorld import World
-
+from typing import Any, Optional
 import worlds.lsw3.Items
 import worlds.lsw3.character_regions
 from .LSW3Option import LSW3Options
@@ -50,23 +50,23 @@ from .ship_regions import (
 )
 
 from .character_regions import (
-    jedi,
-    sith,
-    grappling_hook,
-    protocol,
-    astromech,
-    hover,
-    high_jump,
-    short,
-    commander,
-    clone,
-    bounty_hunter,
-    silver_destroyer,
-    gold_destroyer,
-    target,
-    electric_panels,
-    sniper,
-    tx_20_panels,
+	jedi,
+	sith,
+	grappling_hook,
+	protocol,
+	astromech,
+	hover,
+	high_jump,
+	short,
+	commander,
+	clone,
+	bounty_hunter,
+	silver_destroyer,
+	gold_destroyer,
+	target,
+	electric_panels,
+	sniper,
+	tx_20_panels,
 )
 
 ########################################## Launcher Code ###################################################
@@ -190,7 +190,7 @@ def run_client(*launcher_args):
 	async def _run():
 
 
-		ctx = LSW3Context(args.connect, args.password)
+		ctx = worlds.lsw3.LSW3Client.client.LSW3Context(args.connect, args.password)
 
 		if gui_enabled:
 			ctx.run_gui()
@@ -208,8 +208,8 @@ if __name__ == "__main__":
 	main()
 
 def launch_client(*args):
-    from worlds.lsw3.startup import main
-    main()
+	from worlds.lsw3.startup import main
+	main()
 
 
 components.append(
@@ -227,6 +227,7 @@ components.append(
 
 class LSW3World(World):
 	game = GAME_NAME
+	ut_can_gen_without_yaml = True
 
 	options_dataclass = LSW3Options
 	# pyrefly: ignore[bad-override-mutable-attribute]
@@ -319,10 +320,11 @@ class LSW3World(World):
 		red_brick_count = self.options.red_brick_count.value
 
 		# Red Bricks
-		self.randomized_red_bricks = self.random.sample(
-			sorted(RED_BRICK_ITEM_IDS.keys()),
-			red_brick_count,
-		)
+		if not hasattr(self, "randomized_red_bricks"):
+			self.randomized_red_bricks = self.random.sample(
+				sorted(RED_BRICK_ITEM_IDS.keys()),
+				red_brick_count,
+			)
 
 		# Characters eligible for randomization.
 		eligible_characters = self.get_used_characters()
@@ -350,35 +352,49 @@ class LSW3World(World):
 
 		# Choose one available character from each category, guaranteeing you can get at least 1 of every kind
 		guaranteed_characters = set()
+		if not hasattr(self, "randomized_characters"):
+			for category in character_categories:
+				available = sorted(category & eligible_characters)
 
-		for category in character_categories:
-			available = sorted(category & eligible_characters)
+				if available:
+					guaranteed_characters.add(self.random.choice(available))
+			if self.options.randomize_ships.value:
+				ship_characters = {
+					"Hondo Ohnaka",
+					"Jango Fett",
+				}
 
-			if available:
-				guaranteed_characters.add(self.random.choice(available))
+				if self.options.use_brig_characters.value:
+					ship_characters.update({
+						"Poggle the Lesser",
+						"Nute Gunray",
+					})
 
-		# Calculate the configured character count.
-		character_count = round(
-			len(eligible_characters)
-			* self.options.character_percent.value
-			/ 100
-		)
-
-		# Ensure every guaranteed character fits in the pool.
-		character_count = max(character_count, len(guaranteed_characters))
-
-		# Fill the remaining slots randomly without duplicates.
-		remaining_characters = sorted(
-			eligible_characters - guaranteed_characters
-		)
-
-		self.randomized_characters = sorted(guaranteed_characters)
-		self.randomized_characters.extend(
-			self.random.sample(
-				remaining_characters,
-				character_count - len(guaranteed_characters),
+				guaranteed_characters.update(
+					ship_characters & eligible_characters
+				)
+			# Calculate the configured character count.
+			character_count = round(
+				len(eligible_characters)
+				* self.options.character_percent.value
+				/ 100
 			)
-		)
+
+			# Ensure every guaranteed character fits in the pool.
+			character_count = max(character_count, len(guaranteed_characters))
+
+			# Fill the remaining slots randomly without duplicates.
+			remaining_characters = sorted(
+				eligible_characters - guaranteed_characters
+			)
+
+			self.randomized_characters = sorted(guaranteed_characters)
+			self.randomized_characters.extend(
+				self.random.sample(
+					remaining_characters,
+					character_count - len(guaranteed_characters),
+				)
+			)
 
 		# Progressive Wallets
 		if self.options.progressive_wallets.value:
@@ -400,8 +416,14 @@ class LSW3World(World):
 			)
 
 		# Randomized Ships
-		if (self.options.randomize_ships.value): # {
-			for ship in SHIP_ITEM_IDS:
+		if self.options.randomize_ships.value:
+			shiplist = SHIP_ITEM_IDS.copy()
+
+			if not self.options.use_brig_characters.value:
+				shiplist.pop("Geonosian Starfighter")
+				shiplist.pop("Neimoidian Shuttle")
+
+			for ship in shiplist:
 				self.multiworld.itempool.append(
 					self.create_item(ship)
 				)
@@ -416,6 +438,7 @@ class LSW3World(World):
 				level_counts[level_name[0]] += 1
 			else:
 				unmatched_levels.append(level_name)
+
 		# Progressive Levels
 		if self.options.progressive_levels.value:
 			for _ in range(level_counts["D"]):
@@ -486,6 +509,18 @@ class LSW3World(World):
 		if self.options.use_minikit_characters.value:
 			used_characters.update(minikit_characters)
 
+		# Characters required for ship unlocks.
+		if self.options.randomize_ships.value:
+			used_characters.update({
+				"Hondo Ohnaka",
+				"Jango Fett",
+			})
+
+			if self.options.use_brig_characters.value:
+				used_characters.update({
+					"Poggle the Lesser",
+					"Nute Gunray",
+				})
 		return used_characters
 
 	def create_item(self, name):
@@ -516,9 +551,56 @@ class LSW3World(World):
 
 	def generate_basic(self):
 		pass
+	# }
+
+	def generate_early(self) -> None:
+		re_gen_passthrough = getattr(self.multiworld, "re_gen_passthrough", {})
+		if re_gen_passthrough and self.game in re_gen_passthrough:
+			# Get the passed through slot data from the real generation
+			slot_data: dict[str, Any] = re_gen_passthrough[self.game]
+
+			slot_options: dict[str, Any] = slot_data.get("options", {})
+			# Set all your options here instead of getting them from the yaml
+			for key, value in slot_options.items():
+				opt: Optional[Options.Option] = getattr(self.options, key, None)
+				if opt is not None:
+					# You can also set .value directly but that won't work if you have OptionSets
+					setattr(self.options, key, opt.from_any(value))
+			# Restore randomized results
+			if "randomized_red_brick_names" in slot_data:
+				self.randomized_red_bricks = (
+					slot_data["randomized_red_brick_names"]
+				)
+
+			if "randomized_characters" in slot_data:
+				self.randomized_characters = (
+					slot_data["randomized_characters"]
+				)
+
+	@staticmethod
+	def interpret_slot_data(slot_data: dict[str, Any]) -> dict[str, Any]:
+		# Trigger a regen in UT
+		return slot_data
 
 	def fill_slot_data(self):
 		return {
+			# }
+			# UT Options
+			"options": self.options.as_dict(
+				"red_brick_count",
+				"character_percent",
+				"progressive_wallets",
+				"progressive_levels",
+				"randomize_ships",
+				"use_minikit_characters",
+				"use_groundBattle_characters",
+				"use_brig_characters",
+			),
+
+			# UT Randomization Results?
+			"randomized_red_brick_names": self.randomized_red_bricks,
+			"randomized_characters": self.randomized_characters,
+
 			"randomized_red_bricks": [
 				int(name.split()[-1])
 				for name in self.randomized_red_bricks
@@ -526,5 +608,6 @@ class LSW3World(World):
 			"randomizedShips": self.options.randomize_ships.value,
 			"haveWallets": self.options.progressive_wallets.value,
 			"progressiveLevels": self.options.progressive_levels.value,
+
 		}
 
